@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "FoilGuard",
+  "version": "0.1.0",
+  "description": "Detects typosquatting, homoglyph attacks, and newly registered domains. Runs locally — no API key, no data sent to external servers.",
+  "permissions": ["tabs", "storage", "webNavigation"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/foilguard-16.png",
+      "48": "icons/foilguard-48.png",
+      "128": "icons/foilguard-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/foilguard-16.png",
+    "48": "icons/foilguard-48.png",
+    "128": "icons/foilguard-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

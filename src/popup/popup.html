@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <link rel="stylesheet" href="popup.css" />
+  <title>FoilGuard</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img id="logo-icon" width="16" height="16" alt="" class="logo-icon" />
+      <span class="logo">FoilGuard</span>
+    </header>
+
+    <main>
+      <div id="score-wrap">
+        <div id="score-circle" class="neutral">
+          <span id="score-value">—</span>
+        </div>
+        <p id="domain-text"></p>
+      </div>
+
+      <ul id="reasons"></ul>
+
+      <p id="safe-msg" class="hidden">No threats detected.</p>
+      <p id="no-data-msg" class="hidden">Navigate to a website to scan it.</p>
+    </main>
+
+    <div id="dev-panel" class="hidden">
+      <form id="dev-form">
+        <input id="dev-input" type="text" placeholder="test a hostname, e.g. gogle.com" spellcheck="false" autocomplete="off" />
+        <button type="submit">Scan</button>
+      </form>
+      <div id="dev-result" class="hidden"></div>
+    </div>
+
+    <footer>
+      <button id="dev-toggle" type="button" title="Toggle scanner">⚙</button>
+      <a href="https://github.com/nikolap994/foillab" target="_blank" rel="noopener">
+        FoilLab CTF →
+      </a>
+    </footer>
+  </div>
+  <script type="module" src="popup.ts"></script>
+</body>
+</html>
