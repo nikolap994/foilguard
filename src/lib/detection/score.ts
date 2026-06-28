@@ -227,7 +227,7 @@ export function calculateRiskScoreSync(hostname: string): RiskResult {
 // Used for the badge update after navigation completes.
 export async function calculateRiskScore(hostname: string): Promise<RiskResult> {
   const base = computeBaseRisk(hostname)
-  const { domain, minDist } = base
+  const { domain } = base
   let { score, reasons } = base
 
   let ageDays: number | null = null
