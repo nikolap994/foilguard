@@ -69,15 +69,31 @@ function showResult(data: { domain: string; score: number; reasons: string[]; ur
   }
 }
 
-async function checkForScan(): Promise<void> {
+let currentTabId: number | null = null
+
+async function checkCurrentTab(): Promise<void> {
   await loadThreshold()
-  const stored = await chrome.storage.session.get(SCAN_KEY)
-  const data = stored[SCAN_KEY]
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (!tab?.id) return
+  currentTabId = tab.id
+  // Background writes results under tab ID for navigation scans, and under
+  // SCAN_KEY for context-menu triggered scans. Check both.
+  const stored = await chrome.storage.session.get([SCAN_KEY, String(tab.id)])
+  const data = stored[SCAN_KEY] ?? stored[String(tab.id)]
   if (data) showResult(data)
+  else {
+    idleState.classList.remove('hidden')
+    resultState.classList.add('hidden')
+  }
 }
 
 chrome.storage.session.onChanged.addListener((changes) => {
-  if (changes[SCAN_KEY]?.newValue) showResult(changes[SCAN_KEY].newValue)
+  const fromScanKey = changes[SCAN_KEY]?.newValue
+  const fromTabKey = currentTabId != null ? changes[String(currentTabId)]?.newValue : null
+  const data = fromScanKey ?? fromTabKey
+  if (data) showResult(data)
 })
 
-checkForScan()
+chrome.tabs.onActivated.addListener(() => checkCurrentTab())
+
+checkCurrentTab()

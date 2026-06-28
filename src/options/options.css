@@ -342,3 +342,10 @@ ul li button:hover { color: #ef4444; opacity: 1; }
 .api-key-input:focus { border-color: rgba(65,208,127,0.4); }
 .btn-small { padding: 7px 12px; font-size: 12px; }
 .sb-status { font-size: 12px; min-height: 16px; margin: 0; }
+
+/* browser support section */
+.browser-support-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.browser-item { font-size: 11px; font-family: 'Courier New', monospace; padding: 3px 10px; border-radius: 4px; border: 1px solid; }
+.browser-item.supported { color: #41d07f; background: rgba(65,208,127,0.08); border-color: rgba(65,208,127,0.25); }
+.browser-item.partial { color: #f59e0b; background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); }
+.browser-item.unsupported { color: #64748b; background: rgba(100,116,139,0.06); border-color: rgba(100,116,139,0.15); }

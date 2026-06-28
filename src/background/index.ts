@@ -1,9 +1,27 @@
 import { calculateRiskScore, calculateRiskScoreSync } from '../lib/detection/score'
 import { extendTopDomains, TOP_DOMAINS } from '../lib/detection/domains'
 import { getPolicy } from '../lib/policy'
+import type { Policy } from '../lib/policy'
 import { logEvent, getAuditLog } from '../lib/audit'
 import { checkSafeBrowsing } from '../lib/detection/safebrowsing'
 import type { RiskResult } from '../lib/detection/score'
+
+// ─── In-memory policy cache ────────────────────────────────────────────────
+// Keeps the policy available synchronously so onBeforeNavigate can check the
+// threshold without an async storage round-trip before calling tabs.update.
+let _policy: Policy | null = null
+
+async function getPolicyFast(): Promise<Policy> {
+  if (_policy) return _policy
+  _policy = await getPolicy()
+  return _policy
+}
+
+// Invalidate cache when the user changes options.
+chrome.storage.sync.onChanged.addListener(async () => {
+  _policy = await getPolicy()
+})
+// ──────────────────────────────────────────────────────────────────────────
 
 // ─── Remote domain list sync ───────────────────────────────────────────────
 const REMOTE_DOMAINS_URL =
@@ -47,6 +65,7 @@ async function syncDomainsIfStale(): Promise<void> {
 }
 
 applyCachedDomains()
+getPolicyFast()
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === UPDATE_ALARM) fetchRemoteDomains()
@@ -158,8 +177,12 @@ chrome.webNavigation.onBeforeNavigate.addListener(async ({ tabId, url, frameId }
     return
   }
 
-  const policy = await getPolicy()
+  // Score synchronously first — bail out immediately if safe, before any await.
+  // This minimises the async gap between onBeforeNavigate and tabs.update so
+  // that fast server redirects can't slip through before we intercept.
   let result = calculateRiskScoreSync(hostname)
+
+  const policy = _policy ?? await getPolicyFast()
 
   // Redirect chain boost: 3+ hops in under 3 seconds → +20 to destination score
   const redir = tabRedirects.get(tabId)
@@ -236,7 +259,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async ({ tabId, url, frameId }
 chrome.tabs.onCreated.addListener(async (tab) => {
   if (!tab.openerTabId || !tab.id) return
 
-  const policy = await getPolicy()
+  const policy = _policy ?? await getPolicyFast()
   if (!policy.blockPopups) return
 
   try {
@@ -309,7 +332,7 @@ chrome.webNavigation.onCompleted.addListener(async ({ tabId, url, frameId }) => 
     return
   }
 
-  const policy = await getPolicy()
+  const policy = _policy ?? await getPolicyFast()
 
   if (policy.customAllowlist.includes(result.domain)) {
     await chrome.storage.session.set({ [tabId]: { ...result, score: 0 } })
