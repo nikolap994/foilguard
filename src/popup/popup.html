@@ -25,15 +25,8 @@
 
       <p id="safe-msg" class="hidden">No threats detected.</p>
       <p id="no-data-msg" class="hidden">Navigate to a website to scan it.</p>
+      <p id="stats-line" class="stats-line hidden"></p>
     </main>
-
-    <div id="dev-panel" class="hidden">
-      <form id="dev-form">
-        <input id="dev-input" type="text" placeholder="test a hostname, e.g. gogle.com" spellcheck="false" autocomplete="off" />
-        <button type="submit">Scan</button>
-      </form>
-      <div id="dev-result" class="hidden"></div>
-    </div>
 
     <div id="audit-panel" class="hidden">
       <div id="audit-list"></div>
@@ -43,11 +36,24 @@
 
     <footer>
       <div class="footer-left">
-        <button id="dev-toggle" type="button" title="Toggle scanner">⚙</button>
-        <button id="audit-toggle" type="button" title="Toggle audit log">log</button>
+        <button id="audit-toggle" type="button" title="Blocked sites log" aria-pressed="false">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <rect x="1" y="2" width="12" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="1" y="6.25" width="12" height="1.5" rx="0.75" fill="currentColor"/>
+            <rect x="1" y="10.5" width="8" height="1.5" rx="0.75" fill="currentColor"/>
+          </svg>
+          Log
+        </button>
+        <button id="options-btn" type="button" title="Settings">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          Settings
+        </button>
       </div>
       <a href="https://github.com/nikolap994/foillab" target="_blank" rel="noopener">
-        FoilLab CTF →
+        FoilLab →
       </a>
     </footer>
   </div>

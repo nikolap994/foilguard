@@ -108,6 +108,12 @@ main {
 
 #safe-msg { color: #22c55e; }
 
+.stats-line {
+  font-size: 11px;
+  color: #334155;
+  text-align: center;
+}
+
 .hidden { display: none; }
 
 #audit-panel {
@@ -207,23 +213,35 @@ footer a {
 
 footer a:hover { color: #94a3b8; }
 
-#dev-toggle,
-#audit-toggle {
+#audit-toggle,
+#options-btn {
   background: none;
-  border: none;
-  color: #334155;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: #475569;
   cursor: pointer;
   font-size: 11px;
-  padding: 0;
+  padding: 4px 7px;
   line-height: 1;
-  transition: color 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-#dev-toggle { font-size: 13px; }
+#audit-toggle:hover,
+#options-btn:hover {
+  color: #94a3b8;
+  background: #12161f;
+  border-color: #1e2533;
+}
 
-#dev-toggle:hover,
-#audit-toggle:hover { color: #64748b; }
+#audit-toggle[aria-pressed="true"] {
+  color: #41d07f;
+  background: rgba(65,208,127,0.08);
+  border-color: rgba(65,208,127,0.2);
+}
 
 #dev-panel {
   padding: 10px 16px;

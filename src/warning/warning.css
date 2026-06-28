@@ -25,13 +25,13 @@ header {
   align-items: center;
   gap: 8px;
   padding: 24px 0 32px;
-  opacity: 0.5;
 }
 
 .logo {
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.3px;
+  color: #64748b;
 }
 
 main {
@@ -170,6 +170,32 @@ button:hover { opacity: 0.85; }
   padding: 10px 14px;
   max-width: 380px;
   line-height: 1.5;
+}
+
+.btn-trust {
+  background: transparent;
+  color: #475569;
+  border: 1px solid #1e2533;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.btn-trust:hover { color: #64748b; border-color: #334155; }
+
+.kbd-hint {
+  font-size: 11px;
+  color: #1e2533;
+  margin-top: -4px;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid #1e2533;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: 'Menlo', 'Consolas', monospace;
+  color: #334155;
 }
 
 .hidden { display: none; }

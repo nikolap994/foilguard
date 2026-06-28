@@ -1,7 +1,100 @@
 import { calculateRiskScore, calculateRiskScoreSync } from '../lib/detection/score'
+import { extendTopDomains } from '../lib/detection/domains'
 import { getPolicy } from '../lib/policy'
 import { logEvent } from '../lib/audit'
 import type { RiskResult } from '../lib/detection/score'
+
+// ─── Remote domain list sync ───────────────────────────────────────────────
+// Updating top-domains.json in the repo propagates to all installed users
+// within 24 hours — no extension update required.
+const REMOTE_DOMAINS_URL =
+  'https://raw.githubusercontent.com/nikolap994/foilguard/master/src/data/top-domains.json'
+const REMOTE_KEY = 'foilguard_remote_domains'
+const REMOTE_TS_KEY = 'foilguard_remote_domains_ts'
+const UPDATE_ALARM = 'foilguard-domains-refresh'
+const STALE_MS = 24 * 60 * 60 * 1000
+
+// Tracks whether this worker instance already merged cached remote domains.
+// Reset to false each time the service worker restarts (module re-initialised).
+let remoteMerged = false
+
+async function applyCachedDomains(): Promise<void> {
+  if (remoteMerged) return
+  const stored = await chrome.storage.local.get(REMOTE_KEY)
+  const cached = stored[REMOTE_KEY]
+  if (Array.isArray(cached)) extendTopDomains(cached as string[])
+  remoteMerged = true
+}
+
+async function fetchRemoteDomains(): Promise<void> {
+  try {
+    const res = await fetch(REMOTE_DOMAINS_URL, { cache: 'no-store' })
+    if (!res.ok) return
+    const list: unknown = await res.json()
+    if (!Array.isArray(list)) return
+    const domains = (list as unknown[]).filter((d): d is string => typeof d === 'string')
+    await chrome.storage.local.set({ [REMOTE_KEY]: domains, [REMOTE_TS_KEY]: Date.now() })
+    extendTopDomains(domains)
+    remoteMerged = true
+  } catch { /* network unavailable — bundled list stays active */ }
+}
+
+async function syncDomainsIfStale(): Promise<void> {
+  const stored = await chrome.storage.local.get(REMOTE_TS_KEY)
+  const ts = stored[REMOTE_TS_KEY] as number | undefined
+  if (!ts || Date.now() - ts > STALE_MS) {
+    await fetchRemoteDomains()
+  } else {
+    await applyCachedDomains()
+  }
+}
+
+// Apply any cached remote domains immediately when the worker starts.
+// This covers restarts triggered by navigation events — the bundled list
+// is always valid, remote extras kick in as soon as storage resolves.
+applyCachedDomains()
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === UPDATE_ALARM) fetchRemoteDomains()
+})
+// ──────────────────────────────────────────────────────────────────────────
+
+chrome.runtime.onInstalled.addListener(async (details) => {
+  chrome.contextMenus.create({
+    id: 'foilguard-check',
+    title: 'Check this link with FoilGuard',
+    contexts: ['link'],
+  })
+
+  // Create the 24-hour refresh alarm (idempotent — Chrome deduplicates by name).
+  chrome.alarms.create(UPDATE_ALARM, { periodInMinutes: 60 * 24 })
+
+  // Fetch immediately on install/update so users get the latest list right away.
+  await syncDomainsIfStale()
+
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('src/onboarding/onboarding.html') })
+  }
+})
+
+chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.menuItemId !== 'foilguard-check' || !info.linkUrl) return
+  let hostname: string
+  try {
+    hostname = new URL(info.linkUrl).hostname
+    if (!hostname) return
+  } catch {
+    return
+  }
+  const result = calculateRiskScoreSync(hostname)
+  const safe = result.score === 0
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('icons/foilguard-48.png'),
+    title: safe ? `${hostname} looks safe` : `Risk score ${result.score} — ${hostname}`,
+    message: safe ? 'No threats detected.' : (result.reasons[0] ?? 'Potential threat detected.'),
+  })
+})
 
 // Intercept navigation before the page loads.
 // Runs a fast sync score — no RDAP network call, negligible delay.

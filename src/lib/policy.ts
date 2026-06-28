@@ -22,14 +22,18 @@ const DEFAULTS: Policy = {
   reportingEndpoint: '',
 }
 
-// Reads policy from chrome.storage.managed (pushed by MDM/GPO in enterprise deployments).
-// Falls back to defaults in personal Chrome where managed storage is unavailable.
+// Reads policy merging three layers (lowest → highest priority):
+//   1. Built-in defaults
+//   2. Personal settings from options page (chrome.storage.local)
+//   3. Enterprise managed policy via MDM/GPO (chrome.storage.managed) — always wins
 export async function getPolicy(): Promise<Policy> {
+  const personal = await chrome.storage.local.get('foilguard_personal_policy')
+  const personalPolicy = (personal['foilguard_personal_policy'] ?? {}) as Partial<Policy>
+
   try {
     const managed = await chrome.storage.managed.get(null)
-    return { ...DEFAULTS, ...managed } as Policy
+    return { ...DEFAULTS, ...personalPolicy, ...managed } as Policy
   } catch {
-    // chrome.storage.managed throws if the extension is not in a managed environment.
-    return { ...DEFAULTS }
+    return { ...DEFAULTS, ...personalPolicy }
   }
 }

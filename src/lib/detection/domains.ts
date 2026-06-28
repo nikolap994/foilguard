@@ -1,6 +1,14 @@
 import topDomainsData from '../../data/top-domains.json'
 
-export const TOP_DOMAINS: ReadonlySet<string> = new Set(topDomainsData)
+// Mutable so background can inject remotely-fetched brands without reloading the worker.
+export const TOP_DOMAINS: Set<string> = new Set(topDomainsData)
+
+export function extendTopDomains(extra: string[]): void {
+  for (const d of extra) {
+    const clean = d.toLowerCase().trim()
+    if (clean) TOP_DOMAINS.add(clean)
+  }
+}
 
 export const SUSPICIOUS_TLDS = new Set([
   '.tk', '.ml', '.ga', '.cf', '.gq',

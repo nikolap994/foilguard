@@ -11,6 +11,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         warning: resolve(__dirname, 'src/warning/warning.html'),
+        options: resolve(__dirname, 'src/options/options.html'),
+        onboarding: resolve(__dirname, 'src/onboarding/onboarding.html'),
       },
     },
   },

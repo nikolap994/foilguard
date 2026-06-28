@@ -52,9 +52,38 @@ interface BaseRisk {
   minDist: number
 }
 
+// IPv4 detection helpers — public IPs in browser URLs are nearly always malicious.
+// Private/loopback ranges (10.x, 192.168.x, 172.16-31.x, 127.x) are excluded.
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
+
+function isIPv4(h: string): boolean {
+  return IPV4_RE.test(h)
+}
+
+function isPublicIPv4(h: string): boolean {
+  const m = h.match(IPV4_RE)
+  if (!m) return false
+  const [a, b] = [Number(m[1]), Number(m[2])]
+  if (a === 127 || a === 10) return false
+  if (a === 192 && b === 168) return false
+  if (a === 172 && b >= 16 && b <= 31) return false
+  return true
+}
+
 // Synchronous core — no network calls. Used by both the blocking check (fast)
 // and the full async check (which adds the RDAP age signal on top).
 function computeBaseRisk(hostname: string): BaseRisk {
+  // IP address handling — score public IPs, pass private/loopback through as safe
+  if (isIPv4(hostname)) {
+    if (!isPublicIPv4(hostname)) return { domain: hostname, score: 0, reasons: [], minDist: 0 }
+    return {
+      domain: hostname,
+      score: 70,
+      reasons: ['Direct IP address — real websites use domain names, not numeric addresses. Phishing pages use raw IPs to hide their identity.'],
+      minDist: Infinity,
+    }
+  }
+
   const domain = extractRegistrableDomain(hostname)
   const reasons: string[] = []
   let score = 0
@@ -68,17 +97,17 @@ function computeBaseRisk(hostname: string): BaseRisk {
   // Punycode IDN — strongest signal for homoglyph attacks
   if (isPunycode(domain)) {
     score += 60
-    reasons.push('Domain uses internationalized characters (IDN) — possible homoglyph attack')
+    reasons.push('This web address uses special encoded characters designed to look identical to a real site — a technique used to create convincing fake pages')
   } else if (containsNonASCII(domain)) {
     score += 50
-    reasons.push('Domain contains non-ASCII characters that may visually impersonate another site')
+    reasons.push('This web address contains characters from other languages that look like normal letters — a trick used to make fake sites appear legitimate')
   }
 
   // Homoglyph substitution
   const homoglyphNorm = normalizeHomoglyphs(domain)
   if (homoglyphNorm !== domain) {
     score += 40
-    reasons.push('Domain contains characters that visually resemble Latin letters')
+    reasons.push('One or more characters in this address look like regular letters but come from another alphabet (e.g. Cyrillic or Greek) — making a fake site appear identical to the real one')
   }
 
   // Digit substitution — leet-speak (g00gle → google, paypa1 → paypal)
@@ -87,14 +116,14 @@ function computeBaseRisk(hostname: string): BaseRisk {
     const digitBase = digitNorm.split('.')[0]
     if (TOP_DOMAINS.has(digitBase)) {
       score += 70
-      reasons.push(`Domain uses digit substitutions to impersonate "${digitBase}" (e.g. 0→o, 1→i)`)
+      reasons.push(`Disguised as ${digitBase}.com — replaces letters with look-alike numbers (like '0' instead of 'o') to trick you into thinking it's the real site`)
     } else {
       const digitHomoglyphBase = normalizeHomoglyphs(digitNorm).split('.')[0]
       const dLen = digitHomoglyphBase.length
       const distAfterNorm = Math.min(...[...TOP_DOMAINS].filter(b => Math.abs(b.length - dLen) <= 1).map(b => levenshtein(digitHomoglyphBase, b)))
       if (distAfterNorm <= 1) {
         score += 45
-        reasons.push('Domain uses digit substitutions that closely resemble a known brand')
+        reasons.push('Uses numbers in place of letters to look like a well-known website')
       }
     }
   }
@@ -103,7 +132,7 @@ function computeBaseRisk(hostname: string): BaseRisk {
   const tld = '.' + domain.split('.').pop()!
   if (SUSPICIOUS_TLDS.has(tld)) {
     score += 20
-    reasons.push(`Suspicious top-level domain: ${tld}`)
+    reasons.push(`The '${tld}' domain extension is commonly used for free throwaway sites and is heavily abused for phishing`)
   }
 
   // Combosquatting: brand + phishing keyword joined by hyphens (paypal-login.com)
@@ -111,7 +140,7 @@ function computeBaseRisk(hostname: string): BaseRisk {
   if (combo) {
     score += 70
     reasons.push(
-      `Domain combines brand "${combo.brand}" with deceptive keyword "${combo.keyword}" — classic combosquatting pattern`,
+      `Combines the real '${combo.brand}' brand name with '${combo.keyword}' to look like an official page — real companies don't put their name in the middle of a domain like this`,
     )
   }
 
@@ -128,11 +157,11 @@ function computeBaseRisk(hostname: string): BaseRisk {
       if (subBrand && subKeyword) {
         score += 70
         reasons.push(
-          `Subdomain "${label}" combines brand "${subBrand}" with deceptive keyword "${subKeyword}"`,
+          `Uses '${subBrand}' and '${subKeyword}' together in the web address to look official — the real ${subBrand}.com would never be formatted this way`,
         )
       } else if (TOP_DOMAINS.has(label)) {
         score += 35
-        reasons.push(`Brand "${label}" used as a subdomain to impersonate it — possible phishing`)
+        reasons.push(`'${label}' appears in the web address but this is not the real ${label}.com — a common trick to make phishing links look legitimate`)
       }
     }
   }
@@ -155,12 +184,15 @@ function computeBaseRisk(hostname: string): BaseRisk {
     if (minDist <= 1) break
   }
 
-  if (minDist === 1) {
+  // Require a minimum length for both the domain and the matched brand before scoring
+  // typosquatting. Short brands like "ea", "okx", "hp" cause too many false positives
+  // against short-but-legitimate domains like x.com, dev.to, etc.
+  if (minDist === 1 && closestBrand.length >= 4 && baseName.length >= 4) {
     score += 75
-    reasons.push(`Very similar to "${closestBrand}" (1 character off — likely typosquatting)`)
-  } else if (minDist === 2) {
+    reasons.push(`One letter away from ${closestBrand}.com — designed to catch typos or look convincing at a glance`)
+  } else if (minDist === 2 && closestBrand.length >= 5 && baseName.length >= 5) {
     score += 65
-    reasons.push(`Similar to "${closestBrand}" (2 characters off — possible typosquatting)`)
+    reasons.push(`Looks very similar to ${closestBrand}.com but spelled differently — likely a fake copy`)
   }
   // minDist === 0 already scored above via homoglyph/digit blocks.
 
@@ -187,7 +219,7 @@ export async function calculateRiskScore(hostname: string): Promise<RiskResult> 
       score += 40
       reasons = [
         ...reasons,
-        `Domain registered ${dayLabel} ago — newly registered domains imitating known brands are a strong phishing indicator`,
+        `This domain was registered only ${dayLabel} ago — brand-new sites mimicking real companies are a major phishing red flag`,
       ]
     }
   }

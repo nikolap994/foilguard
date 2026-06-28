@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <title>FoilGuard — You're Protected</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img id="logo-icon" width="40" height="40" alt="FoilGuard" />
+      <div>
+        <div class="brand">FoilGuard</div>
+        <div class="brand-sub">by Foil Security Suite</div>
+      </div>
+    </header>
+
+    <main>
+      <div class="hero">
+        <div class="status-badge">
+          <span class="pulse"></span>
+          Active — you're protected
+        </div>
+        <h1>Your browser is now defended against phishing domains.</h1>
+        <p class="lead">FoilGuard watches every site you visit and blocks dangerous impostors before they load — silently, locally, without sending your browsing data anywhere.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🔤</div>
+          <div>
+            <strong>Typosquatting</strong>
+            <p>Catches domains one or two letters off from real brands — like <code>gogle.com</code> or <code>rnicrosoft.com</code>.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔢</div>
+          <div>
+            <strong>Digit substitution</strong>
+            <p>Detects leet-speak tricks like <code>g00gle.com</code> or <code>paypa1.com</code> that replace letters with numbers.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔡</div>
+          <div>
+            <strong>Look-alike characters</strong>
+            <p>Spots Cyrillic, Greek, and other scripts that look identical to English letters in a browser address bar.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⛓️</div>
+          <div>
+            <strong>Combosquatting</strong>
+            <p>Blocks domains that combine a real brand with deceptive words — like <code>paypal-login.com</code> or <code>amazon-security.com</code>.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🕐</div>
+          <div>
+            <strong>Newly registered domains</strong>
+            <p>Flags brand-like domains that were registered in the last 30 days — a strong indicator of a phishing campaign.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔒</div>
+          <div>
+            <strong>Completely private</strong>
+            <p>All detection runs in your browser. No account. No API key. No browsing history sent anywhere.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-inner">
+          <strong>Legitimate sites are never blocked.</strong>
+          <p><code>mail.google.com</code>, <code>accounts.paypal.com</code>, <code>login.microsoft.com</code> — subdomains of real brands always score 0.</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="btn-options" class="btn-primary">Customize settings</button>
+        <a href="https://github.com/nikolap994/foilguard" target="_blank" rel="noopener" class="btn-ghost">View source on GitHub</a>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="onboarding.ts"></script>
+</body>
+</html>

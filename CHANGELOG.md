@@ -4,6 +4,24 @@ All notable changes to FoilGuard are documented here.
 
 ---
 
+## [0.3.0] — 2026-06-28
+
+### Added
+- **Onboarding page** — opens automatically on first install, explains what FoilGuard does and confirms protection is active
+- **Options page** — personal allowlist, personal blocklist, and custom block threshold (no MDM required)
+- **Context menu** — right-click any link → "Check this link with FoilGuard" → instant risk notification
+- **Keyboard shortcut** — `Alt+Shift+F` opens the popup
+- **Firefox support** — `browser_specific_settings` in manifest; compatible with Firefox 109+
+
+### Changed
+- Popup: dev panel removed from user-facing UI; replaced ⚙ icon with direct link to options page
+- Popup: audit toggle relabelled to "log" for clarity
+- All warning page reason messages rewritten in plain English (no security jargon)
+- Warning page logo: now uses 48px icon (was 16px, appeared blurry); header opacity removed
+- Policy layer: personal options page settings now merged below managed policy
+
+---
+
 ## [0.2.0] — 2026-06-28
 
 ### Added

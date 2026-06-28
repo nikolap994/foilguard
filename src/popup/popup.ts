@@ -4,33 +4,6 @@ import type { AuditEntry } from '../lib/audit'
 const AUDIT_KEY = 'foilguard_audit'
 const BLOCK_THRESHOLD = 65
 
-function setupDevPanel(): void {
-  const form = document.getElementById('dev-form') as HTMLFormElement
-  const input = document.getElementById('dev-input') as HTMLInputElement
-  const resultEl = document.getElementById('dev-result')!
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault()
-    const hostname = input.value.trim().replace(/^https?:\/\//, '').split('/')[0]
-    if (!hostname) return
-
-    resultEl.textContent = 'scanning…'
-    resultEl.className = ''
-
-    chrome.runtime.sendMessage({ type: 'test-domain', hostname }, (result: RiskResult | undefined) => {
-      if (!result) {
-        resultEl.textContent = 'No response from background.'
-        resultEl.className = 'dev-error'
-        return
-      }
-      const tag = result.score >= BLOCK_THRESHOLD ? '[BLOCK]' : result.score >= 40 ? '[WARN]' : '[SAFE]'
-      const lines = [`${tag} score ${result.score} — ${result.domain}`, ...result.reasons]
-      resultEl.textContent = lines.join('\n')
-      resultEl.className = result.score >= BLOCK_THRESHOLD ? 'dev-danger' : result.score >= 40 ? 'dev-warning' : 'dev-safe'
-    })
-  })
-}
-
 async function setupAuditPanel(): Promise<void> {
   const auditToggle = document.getElementById('audit-toggle')!
   const auditPanel = document.getElementById('audit-panel')!
@@ -40,6 +13,7 @@ async function setupAuditPanel(): Promise<void> {
 
   auditToggle.addEventListener('click', () => {
     const opening = auditPanel.classList.toggle('hidden') === false
+    auditToggle.setAttribute('aria-pressed', String(opening))
     if (opening) renderAuditEntries(auditList, auditEmpty)
   })
 
@@ -102,6 +76,28 @@ function formatAge(ts: number): string {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
+async function renderStats(): Promise<void> {
+  const statsLine = document.getElementById('stats-line')!
+  const stored = await chrome.storage.local.get(AUDIT_KEY)
+  const log: AuditEntry[] = stored[AUDIT_KEY] ?? []
+  if (log.length === 0) return
+
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayTs = todayStart.getTime()
+
+  const todayCount = log.filter(e => e.ts >= todayTs && e.action !== 'bypassed').length
+  const totalCount = log.filter(e => e.action !== 'bypassed').length
+
+  if (todayCount > 0) {
+    statsLine.textContent = `${todayCount} blocked today · ${totalCount} total`
+    statsLine.classList.remove('hidden')
+  } else if (totalCount > 0) {
+    statsLine.textContent = `${totalCount} blocked total`
+    statsLine.classList.remove('hidden')
+  }
+}
+
 async function render(): Promise<void> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
@@ -148,14 +144,13 @@ function setupHeader(): void {
   const logoIcon = document.getElementById('logo-icon') as HTMLImageElement | null
   if (logoIcon) logoIcon.src = chrome.runtime.getURL('icons/foilguard-16.png')
 
-  const devToggle = document.getElementById('dev-toggle')
-  const devPanel = document.getElementById('dev-panel')
-  if (devToggle && devPanel) {
-    devToggle.addEventListener('click', () => devPanel.classList.toggle('hidden'))
+  const optionsBtn = document.getElementById('options-btn')
+  if (optionsBtn) {
+    optionsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage())
   }
 }
 
 render()
-setupDevPanel()
+renderStats()
 setupAuditPanel()
 setupHeader()

@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
-  <link rel="stylesheet" href="warning.css" />
   <title>FoilGuard — Dangerous Site Blocked</title>
 </head>
 <body>
   <div id="app">
     <header>
-      <img id="logo-icon" width="20" height="20" alt="" />
+      <img id="logo-icon" width="24" height="24" alt="" />
       <span class="logo">FoilGuard</span>
     </header>
 
@@ -29,10 +28,15 @@
       <div id="actions">
         <button id="btn-back" class="btn-safe">Go back — keep me safe</button>
         <button id="btn-proceed" class="btn-danger">Proceed anyway — I understand the risk</button>
+        <button id="btn-trust" class="btn-trust hidden">Trust this site — never warn me again</button>
       </div>
 
       <p id="bypass-note">
         Proceeding will bypass this warning for <strong id="bypass-domain"></strong> for the rest of your browser session.
+      </p>
+
+      <p id="kbd-hint" class="kbd-hint">
+        <kbd>Esc</kbd> go back &nbsp;·&nbsp; <kbd>P</kbd> proceed &nbsp;·&nbsp; <kbd>T</kbd> trust
       </p>
 
       <p id="force-block-note" class="hidden policy-block-note">

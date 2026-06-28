@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <title>FoilGuard — Settings</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img id="logo-icon" width="28" height="28" alt="" />
+      <div>
+        <div class="brand">FoilGuard</div>
+        <div class="brand-sub">Settings</div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section">
+        <h2>Block threshold</h2>
+        <p class="desc">Sites scoring at or above this number are blocked. Lower = stricter. Default is 65.</p>
+        <div class="threshold-row">
+          <input type="range" id="threshold-slider" min="40" max="90" step="5" value="65" />
+          <span id="threshold-value" class="threshold-display">65</span>
+        </div>
+        <div class="threshold-labels">
+          <span>Stricter (40)</span>
+          <span>Default (65)</span>
+          <span>Relaxed (90)</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Personal allowlist</h2>
+        <p class="desc">Domains on this list will never be blocked, regardless of their score.</p>
+        <div class="input-row">
+          <input type="text" id="allowlist-input" placeholder="example.com" autocomplete="off" spellcheck="false" />
+          <button id="allowlist-add">Add</button>
+        </div>
+        <p id="allowlist-error" class="field-error hidden"></p>
+        <ul id="allowlist-entries"></ul>
+      </section>
+
+      <section class="section">
+        <h2>Personal blocklist</h2>
+        <p class="desc">Domains on this list are always blocked, regardless of their score. Cannot be bypassed.</p>
+        <div class="input-row">
+          <input type="text" id="blocklist-input" placeholder="example.com" autocomplete="off" spellcheck="false" />
+          <button id="blocklist-add">Add</button>
+        </div>
+        <p id="blocklist-error" class="field-error hidden"></p>
+        <ul id="blocklist-entries"></ul>
+      </section>
+
+      <div id="save-banner" class="hidden">Settings saved.</div>
+    </main>
+  </div>
+  <script type="module" src="options.ts"></script>
+</body>
+</html>
