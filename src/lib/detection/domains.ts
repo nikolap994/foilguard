@@ -1,88 +1,70 @@
-// Top targeted domains for typosquatting detection.
-// Covers the most impersonated brands across finance, crypto, cloud, social, and more.
-export const TOP_DOMAINS: readonly string[] = [
-  // Search & productivity
-  'google', 'youtube', 'gmail', 'drive', 'docs', 'sheets', 'slides', 'calendar', 'maps',
-  'microsoft', 'office', 'outlook', 'onedrive', 'teams', 'live', 'hotmail',
-  'apple', 'icloud', 'itunes',
-  'yahoo', 'bing', 'duckduckgo',
+import topDomainsData from '../../data/top-domains.json'
 
-  // Social media
-  'facebook', 'instagram', 'twitter', 'linkedin', 'reddit', 'tiktok',
-  'snapchat', 'pinterest', 'discord', 'telegram', 'whatsapp',
-  'signal', 'skype', 'line', 'wechat', 'viber',
-  'tumblr', 'quora', 'medium', 'substack', 'mastodon', 'bluesky',
-
-  // Finance & banking
-  'paypal', 'stripe', 'square', 'wise', 'revolut', 'venmo', 'zelle', 'cashapp',
-  'chase', 'bankofamerica', 'wellsfargo', 'citibank', 'capitalone', 'usbank',
-  'hsbc', 'barclays', 'santander', 'lloyds', 'natwest', 'ing', 'bnp',
-  'tdbank', 'pnc', 'ally', 'schwab', 'fidelity', 'vanguard', 'etrade', 'robinhood', 'webull',
-  'americanexpress', 'discover', 'visa', 'mastercard',
-
-  // Crypto exchanges & wallets
-  'coinbase', 'binance', 'kraken', 'kucoin', 'bybit', 'okx', 'gateio', 'huobi', 'bitfinex',
-  'gemini', 'nexo', 'blockchain', 'metamask', 'phantom', 'ledger', 'trezor',
-  'uniswap', 'opensea', 'rarible', 'blur',
-
-  // Shopping & e-commerce
-  'amazon', 'ebay', 'etsy', 'shopify', 'walmart', 'target', 'bestbuy', 'costco',
-  'aliexpress', 'alibaba', 'temu', 'shein', 'wish',
-  'wayfair', 'chewy', 'newegg', 'ikea', 'homedepot', 'lowes', 'macys', 'nordstrom',
-
-  // Streaming & entertainment
-  'netflix', 'spotify', 'twitch', 'hulu', 'disneyplus', 'hbomax', 'paramount',
-  'peacock', 'crunchyroll', 'primevideo', 'appletv',
-  'soundcloud', 'tidal', 'deezer', 'bandcamp',
-  'steam', 'epicgames', 'roblox', 'ubisoft', 'blizzard', 'ea', 'activision',
-  'playstation', 'xbox', 'nintendo',
-
-  // Developer tools & cloud
-  'github', 'gitlab', 'bitbucket', 'stackoverflow',
-  'npm', 'pypi', 'docker', 'kubernetes',
-  'cloudflare', 'digitalocean', 'linode', 'vultr', 'hetzner', 'ovh',
-  'heroku', 'vercel', 'netlify', 'render', 'railway',
-  'aws', 'azure', 'gcp', 'oracle',
-  'atlassian', 'jira', 'confluence', 'trello',
-  'datadog', 'sentry', 'grafana', 'newrelic', 'hashicorp',
-
-  // SaaS & enterprise
-  'salesforce', 'hubspot', 'zendesk', 'intercom', 'freshdesk',
-  'notion', 'figma', 'canva', 'miro', 'airtable',
-  'slack', 'zoom', 'webex',
-  'monday', 'asana', 'clickup', 'basecamp', 'todoist',
-  'dropbox', 'box', 'evernote',
-  'adobe', 'workday', 'servicenow', 'sap',
-
-  // Security & privacy
-  'lastpass', 'onepassword', 'dashlane', 'bitwarden', 'keeper',
-  'nordvpn', 'expressvpn', 'protonvpn', 'mullvad', 'surfshark',
-  'avast', 'norton', 'kaspersky', 'malwarebytes', 'bitdefender', 'eset', 'mcafee',
-  'protonmail', 'tutanota', 'fastmail',
-
-  // Tech hardware & brands
-  'samsung', 'sony', 'hp', 'dell', 'lenovo', 'asus', 'acer', 'lg',
-  'nvidia', 'intel', 'amd', 'qualcomm',
-  'motorola', 'huawei', 'xiaomi', 'oneplus',
-
-  // Travel & transport
-  'airbnb', 'booking', 'expedia', 'tripadvisor', 'kayak', 'skyscanner',
-  'uber', 'lyft', 'doordash', 'grubhub', 'instacart', 'deliveroo',
-
-  // Domains, hosting & site builders
-  'godaddy', 'namecheap', 'bluehost', 'siteground', 'hostgator',
-  'wordpress', 'wix', 'squarespace', 'webflow',
-
-  // Education
-  'coursera', 'udemy', 'edx', 'pluralsight', 'duolingo', 'khanacademy',
-
-  // News & media
-  'bbc', 'cnn', 'nytimes', 'theguardian', 'reuters', 'bloomberg',
-  'techcrunch', 'theverge', 'wired', 'arstechnica',
-]
+export const TOP_DOMAINS: readonly string[] = topDomainsData
 
 export const SUSPICIOUS_TLDS = new Set([
-  '.tk', '.ml', '.ga', '.cf', '.gq',   // free TLDs historically abused
+  '.tk', '.ml', '.ga', '.cf', '.gq',
   '.xyz', '.top', '.pw', '.cc', '.su',
   '.click', '.link', '.online', '.site', '.website',
+])
+
+// Keywords that, when combined with a brand name in a domain (e.g. paypal-login.com),
+// strongly indicate a phishing or social-engineering attempt.
+export const PHISHING_KEYWORDS = new Set([
+  'login', 'signin', 'secure', 'security', 'verify', 'verification',
+  'account', 'accounts', 'password', 'support', 'help', 'service',
+  'update', 'confirm', 'validation', 'wallet', 'recovery',
+  'auth', 'authentication', 'banking', 'bank', 'official', 'safe',
+  'trust', 'id', 'identity', 'portal', 'access', 'checkout',
+  'pay', 'payment', 'billing', 'invoice', 'refund', 'alert',
+  'notice', 'notification', 'urgent', 'suspend', 'suspended', 'limited',
+])
+
+// Compound public suffixes where eTLD+1 requires 3 labels, not 2.
+// Covers the most common ccTLD compounds (co.uk, com.au, etc.).
+// A full PSL (https://publicsuffix.org) can replace this if the extension grows.
+export const COMPOUND_SUFFIXES = new Set([
+  // UK
+  'co.uk', 'me.uk', 'org.uk', 'net.uk', 'ltd.uk', 'plc.uk',
+  'sch.uk', 'gov.uk', 'nhs.uk', 'ac.uk', 'police.uk',
+  // Australia
+  'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au', 'asn.au', 'id.au',
+  // Brazil
+  'com.br', 'net.br', 'org.br', 'edu.br', 'gov.br',
+  // New Zealand
+  'co.nz', 'net.nz', 'org.nz', 'edu.nz', 'govt.nz',
+  // South Africa
+  'co.za', 'org.za', 'net.za', 'edu.za', 'gov.za',
+  // Japan
+  'co.jp', 'or.jp', 'ne.jp', 'ac.jp', 'ed.jp', 'go.jp',
+  // South Korea
+  'co.kr', 'or.kr', 'ne.kr', 'ac.kr', 'go.kr', 're.kr',
+  // China
+  'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'ac.cn',
+  // India
+  'co.in', 'net.in', 'org.in', 'gov.in', 'edu.in', 'ac.in',
+  // Mexico
+  'com.mx', 'net.mx', 'org.mx', 'edu.mx', 'gob.mx',
+  // Argentina
+  'com.ar', 'net.ar', 'org.ar', 'edu.ar', 'gov.ar',
+  // Singapore
+  'com.sg', 'net.sg', 'org.sg', 'edu.sg', 'gov.sg',
+  // Hong Kong
+  'com.hk', 'net.hk', 'org.hk', 'edu.hk', 'gov.hk',
+  // Taiwan
+  'com.tw', 'net.tw', 'org.tw', 'edu.tw', 'gov.tw',
+  // Philippines
+  'com.ph', 'net.ph', 'org.ph', 'edu.ph', 'gov.ph',
+  // Malaysia
+  'com.my', 'net.my', 'org.my', 'edu.my', 'gov.my',
+  // Indonesia
+  'co.id', 'net.id', 'or.id', 'ac.id', 'go.id',
+  // Pakistan
+  'com.pk', 'net.pk', 'org.pk', 'edu.pk', 'gov.pk',
+  // Colombia
+  'com.co', 'net.co', 'org.co', 'edu.co', 'gov.co',
+  // Venezuela
+  'com.ve', 'net.ve', 'org.ve', 'edu.ve', 'gov.ve',
+  // Peru
+  'com.pe', 'net.pe', 'org.pe', 'edu.pe', 'gob.pe',
 ])

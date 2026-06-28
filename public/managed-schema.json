@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "blockThreshold": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Risk score at which navigation is blocked. Default: 65. Lower = more aggressive blocking."
+    },
+    "reportOnly": {
+      "type": "boolean",
+      "description": "When true, high-risk navigations are logged but not blocked. Useful for monitoring before enforcing."
+    },
+    "disableBypass": {
+      "type": "boolean",
+      "description": "When true, removes the 'Proceed anyway' button from the warning page. Users cannot bypass blocks."
+    },
+    "customAllowlist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Registrable domains (e.g. 'internal-tool.company.com') that are never flagged regardless of risk score."
+    },
+    "customBlocklist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Registrable domains that are always blocked regardless of risk score, with no bypass option."
+    },
+    "reportingEndpoint": {
+      "type": "string",
+      "description": "URL to POST audit events to (blocked/bypassed/warned). Leave empty to disable reporting."
+    }
+  }
+}

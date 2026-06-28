@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <link rel="stylesheet" href="warning.css" />
+  <title>FoilGuard — Dangerous Site Blocked</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img id="logo-icon" width="20" height="20" alt="" />
+      <span class="logo">FoilGuard</span>
+    </header>
+
+    <main>
+      <div id="shield-icon">⛔</div>
+      <h1>Dangerous Site Blocked</h1>
+      <p id="domain-label" class="domain"></p>
+
+      <div id="score-row">
+        <div id="score-circle"><span id="score-value">—</span></div>
+        <span id="score-caption">risk score</span>
+      </div>
+
+      <ul id="reasons"></ul>
+
+      <div id="actions">
+        <button id="btn-back" class="btn-safe">Go back — keep me safe</button>
+        <button id="btn-proceed" class="btn-danger">Proceed anyway — I understand the risk</button>
+      </div>
+
+      <p id="bypass-note">
+        Proceeding will bypass this warning for <strong id="bypass-domain"></strong> for the rest of your browser session.
+      </p>
+
+      <p id="force-block-note" class="hidden policy-block-note">
+        This domain has been blocked by your organisation's security policy and cannot be bypassed.
+      </p>
+    </main>
+  </div>
+  <script type="module" src="warning.ts"></script>
+</body>
+</html>

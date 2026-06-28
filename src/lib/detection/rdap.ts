@@ -1,12 +1,40 @@
 // RDAP (Registration Data Access Protocol) lookup for domain age detection.
 // Queries rdap.org, a public aggregator that routes to the correct registry per TLD.
 // Only the registered domain (eTLD+1) is sent — never the full URL path.
-// All lookups are cached in memory for the lifetime of the service worker.
+// Results are persisted to chrome.storage.session so the cache survives
+// service worker restarts (service workers are terminated after ~30s of inactivity).
 
 const RDAP_BASE = 'https://rdap.org/domain/'
 const TIMEOUT_MS = 5_000
+const CACHE_TTL_MS = 60 * 60 * 1_000   // 1 hour
+const CACHE_PREFIX = 'rdap:'
 
-const cache = new Map<string, number | null>()
+interface CacheEntry {
+  value: number | null
+  exp: number
+}
+
+async function readCache(domain: string): Promise<{ hit: boolean; value: number | null }> {
+  try {
+    const key = CACHE_PREFIX + domain
+    const stored = await chrome.storage.session.get(key)
+    const entry = stored[key] as CacheEntry | undefined
+    if (!entry || Date.now() > entry.exp) return { hit: false, value: null }
+    return { hit: true, value: entry.value }
+  } catch {
+    return { hit: false, value: null }
+  }
+}
+
+async function writeCache(domain: string, value: number | null): Promise<void> {
+  try {
+    const key = CACHE_PREFIX + domain
+    const entry: CacheEntry = { value, exp: Date.now() + CACHE_TTL_MS }
+    await chrome.storage.session.set({ [key]: entry })
+  } catch {
+    // Storage write failure is non-fatal — skip caching.
+  }
+}
 
 // Returns the domain's age in days since registration, or null if the lookup
 // fails (network error, timeout, registry not available, malformed response).
@@ -15,7 +43,8 @@ export async function fetchDomainAge(domain: string): Promise<number | null> {
   const registrable = extractRegistrable(domain)
   if (!registrable) return null
 
-  if (cache.has(registrable)) return cache.get(registrable)!
+  const cached = await readCache(registrable)
+  if (cached.hit) return cached.value
 
   try {
     const controller = new AbortController()
@@ -27,17 +56,17 @@ export async function fetchDomainAge(domain: string): Promise<number | null> {
     clearTimeout(timer)
 
     if (!response.ok) {
-      cache.set(registrable, null)
+      await writeCache(registrable, null)
       return null
     }
 
     const data: unknown = await response.json()
     const ageDays = parseRegistrationAge(data)
-    cache.set(registrable, ageDays)
+    await writeCache(registrable, ageDays)
     return ageDays
   } catch {
-    // AbortError (timeout), network failure, or JSON parse error — fail open.
-    cache.set(registrable, null)
+    // AbortError (timeout), network failure, JSON parse error — fail open.
+    await writeCache(registrable, null)
     return null
   }
 }
@@ -62,9 +91,6 @@ function parseRegistrationAge(data: unknown): number | null {
   return Math.floor((Date.now() - regDate.getTime()) / 86_400_000)
 }
 
-// Returns the registrable domain (last two DNS labels).
-// Covers the common TLD shapes: .com, .net, .org, .io, .xyz, .tk, etc.
-// Compound ccTLDs like .co.uk are out of scope for the MVP.
 function extractRegistrable(hostname: string): string | null {
   const parts = hostname.split('.')
   if (parts.length < 2) return null

@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "Detects typosquatting, homoglyph attacks, and newly registered domains. Runs locally — no API key, no data sent to external servers.",
   "permissions": ["tabs", "storage", "webNavigation"],
+  "storage": {
+    "managed_schema": "managed-schema.json"
+  },
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background/index.ts",
