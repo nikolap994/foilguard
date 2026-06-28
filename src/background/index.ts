@@ -59,10 +59,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // is suspiciously long (≥3 hops within 3 seconds).
 const tabRedirects = new Map<number, { count: number; firstMs: number }>()
 
-chrome.webNavigation.onBeforeRedirect.addListener(({ tabId, frameId }) => {
-  if (frameId !== 0) return
-  const entry = tabRedirects.get(tabId) ?? { count: 0, firstMs: Date.now() }
-  tabRedirects.set(tabId, { count: entry.count + 1, firstMs: entry.firstMs })
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.frameId !== 0) return
+  const qualifiers = (details as unknown as { transitionQualifiers?: string[] }).transitionQualifiers ?? []
+  if (!qualifiers.includes('server_redirect')) return
+  const entry = tabRedirects.get(details.tabId) ?? { count: 0, firstMs: Date.now() }
+  tabRedirects.set(details.tabId, { count: entry.count + 1, firstMs: entry.firstMs })
 })
 // ──────────────────────────────────────────────────────────────────────────
 

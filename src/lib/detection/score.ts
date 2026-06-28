@@ -232,7 +232,9 @@ export async function calculateRiskScore(hostname: string): Promise<RiskResult> 
 
   let ageDays: number | null = null
 
-  if (minDist <= 3) {
+  // Run age check whenever any risk signal fired — not only for Levenshtein-close domains.
+  // Combosquatting, suspicious keywords, and bad TLDs all benefit from the new-domain signal.
+  if (score > 0) {
     ageDays = await fetchDomainAge(domain)
     if (ageDays !== null && ageDays < 30) {
       const dayLabel = ageDays === 1 ? '1 day' : `${ageDays} days`

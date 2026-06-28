@@ -13,7 +13,21 @@ const reasonsList = document.getElementById('reasons')!
 const visitLink = document.getElementById('visit-link') as HTMLAnchorElement
 
 const SCAN_KEY = 'foilguard_sidepanel_scan'
-const BLOCK_THRESHOLD = 65
+const POLICY_KEY = 'foilguard_personal_policy'
+const DEFAULT_THRESHOLD = 65
+
+let blockThreshold = DEFAULT_THRESHOLD
+
+async function loadThreshold(): Promise<void> {
+  const s = await chrome.storage.sync.get(POLICY_KEY)
+  const policy = s[POLICY_KEY] as { blockThreshold?: number } | undefined
+  if (typeof policy?.blockThreshold === 'number') blockThreshold = policy.blockThreshold
+}
+
+chrome.storage.sync.onChanged.addListener((changes) => {
+  const policy = changes[POLICY_KEY]?.newValue as { blockThreshold?: number } | undefined
+  if (typeof policy?.blockThreshold === 'number') blockThreshold = policy.blockThreshold
+})
 
 function showResult(data: { domain: string; score: number; reasons: string[]; url: string }): void {
   idleState.classList.add('hidden')
@@ -27,7 +41,7 @@ function showResult(data: { domain: string; score: number; reasons: string[]; ur
     scoreCircle.className = 'safe'
     verdictText.textContent = 'No threats detected'
     verdictText.className = 'verdict-text verdict-safe'
-  } else if (data.score >= BLOCK_THRESHOLD) {
+  } else if (data.score >= blockThreshold) {
     scoreCircle.className = 'danger'
     verdictText.textContent = 'High risk — likely phishing'
     verdictText.className = 'verdict-text verdict-danger'
@@ -47,7 +61,7 @@ function showResult(data: { domain: string; score: number; reasons: string[]; ur
     reasonsList.appendChild(li)
   }
 
-  if (data.score < BLOCK_THRESHOLD) {
+  if (data.score < blockThreshold) {
     visitLink.href = data.url
     visitLink.classList.remove('hidden')
   } else {
@@ -55,9 +69,8 @@ function showResult(data: { domain: string; score: number; reasons: string[]; ur
   }
 }
 
-// Poll for new scan results — chrome.storage.onChanged fires in the sidepanel
-// context so we get updates without polling, but we also check on open.
 async function checkForScan(): Promise<void> {
+  await loadThreshold()
   const stored = await chrome.storage.session.get(SCAN_KEY)
   const data = stored[SCAN_KEY]
   if (data) showResult(data)
