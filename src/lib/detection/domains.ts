@@ -14,6 +14,8 @@ export const SUSPICIOUS_TLDS = new Set([
   '.tk', '.ml', '.ga', '.cf', '.gq',
   '.xyz', '.top', '.pw', '.cc', '.su',
   '.click', '.link', '.online', '.site', '.website',
+  '.zip', '.download', '.mov', '.phishing',
+  '.loan', '.work', '.date', '.racing', '.win',
 ])
 
 // Keywords that, when combined with a brand name in a domain (e.g. paypal-login.com),

@@ -1,0 +1,49 @@
+name: Weekly domain list update
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Every Monday 06:00 UTC
+  workflow_dispatch:        # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch latest Tranco top-500
+        run: node scripts/update-domains.mjs
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet src/data/top-domains.json \
+            && echo "changed=false" >> "$GITHUB_OUTPUT" \
+            || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore: update top-domains from Tranco'
+          title: 'Weekly domain list update'
+          body: |
+            Automated update from the [Tranco top-500 list](https://tranco-list.eu/).
+
+            Changes to `src/data/top-domains.json` were detected.
+            Once merged, installed users will receive the updated brand list within 24 hours via the remote sync mechanism (no extension update required).
+          branch: chore/update-domains
+          delete-branch: true
+          labels: maintenance

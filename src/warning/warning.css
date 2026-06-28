@@ -66,6 +66,18 @@ h1 {
   border-radius: 6px;
 }
 
+.idn-note {
+  font-size: 12px;
+  color: #f59e0b;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 6px;
+  padding: 7px 12px;
+  max-width: 480px;
+  text-align: center;
+  line-height: 1.5;
+}
+
 #score-row {
   display: flex;
   align-items: center;
@@ -199,3 +211,17 @@ kbd {
 }
 
 .hidden { display: none; }
+
+.btn-report {
+  background: none;
+  border: none;
+  color: #334155;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 6px 0;
+  font-family: inherit;
+  transition: color 0.15s;
+  display: block;
+  margin: 8px auto 0;
+}
+.btn-report:hover { color: #475569; text-decoration: underline; }

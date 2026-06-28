@@ -1,6 +1,6 @@
 import { getPolicy } from './policy'
 
-export type AuditAction = 'blocked' | 'bypassed' | 'warned'
+export type AuditAction = 'blocked' | 'bypassed' | 'warned' | 'popup'
 
 export interface AuditEntry {
   ts: number

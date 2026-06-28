@@ -7,6 +7,7 @@ export interface RiskResult {
   domain: string
   score: number       // 0–100
   reasons: string[]
+  ageDays?: number | null  // domain age from RDAP; null = not found; undefined = not checked
 }
 
 // Extract the registrable domain (eTLD+1) from a hostname.
@@ -84,7 +85,11 @@ function computeBaseRisk(hostname: string): BaseRisk {
     }
   }
 
-  const domain = extractRegistrableDomain(hostname)
+  // Strip mobile/alt subdomains (m., mobile., www2., wap.) so that
+  // m.facebook.com is treated identically to facebook.com during scoring.
+  const cleanHost = hostname.replace(/^(?:m|mobile|www\d+|wap|touch)\./i, '')
+
+  const domain = extractRegistrableDomain(cleanHost)
   const reasons: string[] = []
   let score = 0
 
@@ -142,6 +147,19 @@ function computeBaseRisk(hostname: string): BaseRisk {
     reasons.push(
       `Combines the real '${combo.brand}' brand name with '${combo.keyword}' to look like an official page — real companies don't put their name in the middle of a domain like this`,
     )
+  }
+
+  // Standalone phishing keyword in domain name (no brand required)
+  // e.g. login-portal.net, verify-account.xyz — signals intent without typosquatting a specific brand
+  if (!combo) {
+    const domainParts = originalBase.split('-')
+    const matchedKw = domainParts.find(p => PHISHING_KEYWORDS.has(p))
+    if (matchedKw && domainParts.length >= 2) {
+      score += 15
+      reasons.push(
+        `The domain name contains '${matchedKw}' — a word heavily used in phishing domains to appear trustworthy or official`,
+      )
+    }
   }
 
   // Subdomain abuse: known brand name used as a subdomain label (paypal.evil.com)
@@ -212,8 +230,10 @@ export async function calculateRiskScore(hostname: string): Promise<RiskResult> 
   const { domain, minDist } = base
   let { score, reasons } = base
 
+  let ageDays: number | null = null
+
   if (minDist <= 3) {
-    const ageDays = await fetchDomainAge(domain)
+    ageDays = await fetchDomainAge(domain)
     if (ageDays !== null && ageDays < 30) {
       const dayLabel = ageDays === 1 ? '1 day' : `${ageDays} days`
       score += 40
@@ -224,5 +244,5 @@ export async function calculateRiskScore(hostname: string): Promise<RiskResult> 
     }
   }
 
-  return { domain, score: Math.min(score, 100), reasons }
+  return { domain, score: Math.min(score, 100), reasons, ageDays }
 }

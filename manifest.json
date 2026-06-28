@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "FoilGuard",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Blocks typosquatting, homoglyphs, combosquatting, and newly-registered domain attacks before the page loads. Enterprise MDM policy support. No API key.",
-  "permissions": ["tabs", "storage", "webNavigation", "contextMenus", "notifications", "alarms"],
+  "permissions": ["tabs", "storage", "webNavigation", "contextMenus", "notifications", "alarms", "sidePanel", "history"],
   "storage": {
     "managed_schema": "managed-schema.json"
   },
@@ -20,10 +20,21 @@
       "strict_min_version": "109.0"
     }
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/content/popup-guard.ts"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background/index.ts",
     "type": "module"
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/sidepanel.html"
   },
   "action": {
     "default_popup": "src/popup/popup.html",

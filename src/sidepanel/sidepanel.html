@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <title>FoilGuard — Link Scanner</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img id="logo-icon" width="20" height="20" alt="" class="logo-icon" />
+      <span class="logo">Link Scanner</span>
+    </header>
+
+    <main id="main">
+      <div id="idle-state">
+        <div class="idle-icon">🔗</div>
+        <p class="idle-text">Right-click any link and choose <strong>"Check this link with FoilGuard"</strong> to scan it before you click.</p>
+      </div>
+
+      <div id="result-state" class="hidden">
+        <div id="score-wrap">
+          <div id="score-circle" class="neutral">
+            <span id="score-value">—</span>
+          </div>
+          <div class="score-meta">
+            <p id="domain-text" class="domain-text"></p>
+            <p id="verdict-text" class="verdict-text"></p>
+          </div>
+        </div>
+
+        <ul id="reasons" class="reasons"></ul>
+
+        <div id="result-actions">
+          <a id="visit-link" href="#" target="_blank" rel="noopener" class="btn-visit hidden">Open this link →</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="sidepanel.ts"></script>
+</body>
+</html>

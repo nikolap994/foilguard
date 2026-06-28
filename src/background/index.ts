@@ -1,12 +1,11 @@
 import { calculateRiskScore, calculateRiskScoreSync } from '../lib/detection/score'
-import { extendTopDomains } from '../lib/detection/domains'
+import { extendTopDomains, TOP_DOMAINS } from '../lib/detection/domains'
 import { getPolicy } from '../lib/policy'
-import { logEvent } from '../lib/audit'
+import { logEvent, getAuditLog } from '../lib/audit'
+import { checkSafeBrowsing } from '../lib/detection/safebrowsing'
 import type { RiskResult } from '../lib/detection/score'
 
 // ─── Remote domain list sync ───────────────────────────────────────────────
-// Updating top-domains.json in the repo propagates to all installed users
-// within 24 hours — no extension update required.
 const REMOTE_DOMAINS_URL =
   'https://raw.githubusercontent.com/nikolap994/foilguard/master/src/data/top-domains.json'
 const REMOTE_KEY = 'foilguard_remote_domains'
@@ -14,8 +13,6 @@ const REMOTE_TS_KEY = 'foilguard_remote_domains_ts'
 const UPDATE_ALARM = 'foilguard-domains-refresh'
 const STALE_MS = 24 * 60 * 60 * 1000
 
-// Tracks whether this worker instance already merged cached remote domains.
-// Reset to false each time the service worker restarts (module re-initialised).
 let remoteMerged = false
 
 async function applyCachedDomains(): Promise<void> {
@@ -49,14 +46,37 @@ async function syncDomainsIfStale(): Promise<void> {
   }
 }
 
-// Apply any cached remote domains immediately when the worker starts.
-// This covers restarts triggered by navigation events — the bundled list
-// is always valid, remote extras kick in as soon as storage resolves.
 applyCachedDomains()
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === UPDATE_ALARM) fetchRemoteDomains()
 })
+// ──────────────────────────────────────────────────────────────────────────
+
+// ─── Redirect chain tracking ───────────────────────────────────────────────
+// Tracks the number of server-initiated redirects per tab within the current
+// navigation so we can boost the score of the final destination when a chain
+// is suspiciously long (≥3 hops within 3 seconds).
+const tabRedirects = new Map<number, { count: number; firstMs: number }>()
+
+chrome.webNavigation.onBeforeRedirect.addListener(({ tabId, frameId }) => {
+  if (frameId !== 0) return
+  const entry = tabRedirects.get(tabId) ?? { count: 0, firstMs: Date.now() }
+  tabRedirects.set(tabId, { count: entry.count + 1, firstMs: entry.firstMs })
+})
+// ──────────────────────────────────────────────────────────────────────────
+
+// ─── Daily block counter ───────────────────────────────────────────────────
+async function getTodayBlockCount(): Promise<number> {
+  try {
+    const log = await getAuditLog()
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
+    return log.filter(e => e.ts >= startOfDay.getTime() && (e.action === 'blocked' || e.action === 'popup')).length
+  } catch {
+    return 0
+  }
+}
 // ──────────────────────────────────────────────────────────────────────────
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -66,10 +86,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     contexts: ['link'],
   })
 
-  // Create the 24-hour refresh alarm (idempotent — Chrome deduplicates by name).
   chrome.alarms.create(UPDATE_ALARM, { periodInMinutes: 60 * 24 })
-
-  // Fetch immediately on install/update so users get the latest list right away.
   await syncDomainsIfStale()
 
   if (details.reason === 'install') {
@@ -77,7 +94,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 })
 
-chrome.contextMenus.onClicked.addListener((info) => {
+// ─── Context menu → side panel scan ───────────────────────────────────────
+const SCAN_KEY = 'foilguard_sidepanel_scan'
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== 'foilguard-check' || !info.linkUrl) return
   let hostname: string
   try {
@@ -86,48 +106,113 @@ chrome.contextMenus.onClicked.addListener((info) => {
   } catch {
     return
   }
-  const result = calculateRiskScoreSync(hostname)
-  const safe = result.score === 0
-  chrome.notifications.create({
-    type: 'basic',
-    iconUrl: chrome.runtime.getURL('icons/foilguard-48.png'),
-    title: safe ? `${hostname} looks safe` : `Risk score ${result.score} — ${hostname}`,
-    message: safe ? 'No threats detected.' : (result.reasons[0] ?? 'Potential threat detected.'),
-  })
-})
 
-// Intercept navigation before the page loads.
-// Runs a fast sync score — no RDAP network call, negligible delay.
+  const result = calculateRiskScoreSync(hostname)
+
+  // Store scan result for the side panel to pick up
+  await chrome.storage.session.set({
+    [SCAN_KEY]: {
+      domain: result.domain,
+      score: result.score,
+      reasons: result.reasons,
+      url: info.linkUrl,
+    },
+  })
+
+  // Open the side panel if the API is available (Chrome 114+)
+  if (tab?.id && chrome.sidePanel?.open) {
+    await chrome.sidePanel.open({ tabId: tab.id })
+  } else {
+    // Fallback: notification for older Chrome
+    const safe = result.score === 0
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('icons/foilguard-48.png'),
+      title: safe ? `${hostname} looks safe` : `Risk score ${result.score} — ${hostname}`,
+      message: safe ? 'No threats detected.' : (result.reasons[0] ?? 'Potential threat detected.'),
+    })
+  }
+})
+// ──────────────────────────────────────────────────────────────────────────
+
+// ─── Navigation blocker ────────────────────────────────────────────────────
+// Suspicious URL path keywords that, when combined with a non-zero domain risk score,
+// suggest a credential-harvesting page.
+const PATH_KEYWORDS = ['/login', '/signin', '/verify', '/secure', '/account', '/update', '/password', '/auth']
+
 chrome.webNavigation.onBeforeNavigate.addListener(async ({ tabId, url, frameId }) => {
   if (frameId !== 0) return
 
   let hostname: string
+  let protocol: string
+  let pathname: string
   try {
     const parsed = new URL(url)
     if (!parsed.hostname || !parsed.protocol.startsWith('http')) return
     hostname = parsed.hostname
+    protocol = parsed.protocol
+    pathname = parsed.pathname.toLowerCase()
   } catch {
     return
   }
 
   const policy = await getPolicy()
-  const result = calculateRiskScoreSync(hostname)
+  let result = calculateRiskScoreSync(hostname)
 
-  // Admin-managed allowlist takes priority over everything
+  // Redirect chain boost: 3+ hops in under 3 seconds → +20 to destination score
+  const redir = tabRedirects.get(tabId)
+  if (redir && redir.count >= 3 && Date.now() - redir.firstMs < 3000) {
+    result = {
+      ...result,
+      score: Math.min(result.score + 20, 100),
+      reasons: [
+        ...result.reasons,
+        `This page was reached through ${redir.count} automatic redirects in rapid succession — a common pattern used by ad networks and phishing redirect chains`,
+      ],
+    }
+    tabRedirects.delete(tabId)
+  }
+
+  // Plain-HTTP signal: known brand served over unencrypted connection
+  if (protocol === 'http:' && result.score === 0) {
+    const base = result.domain.split('.')[0]
+    if (TOP_DOMAINS.has(base)) {
+      result = {
+        ...result,
+        score: 30,
+        reasons: [
+          `This site uses plain HTTP — the real ${base}.com always uses HTTPS. This could be a phishing copy or a network interception attempt`,
+        ],
+      }
+    }
+  }
+
+  // Suspicious path signal: if domain already scored > 0 AND path suggests credential harvesting
+  if (result.score >= 20) {
+    const matchedPath = PATH_KEYWORDS.find(kw => pathname === kw || pathname.startsWith(kw + '/') || pathname.startsWith(kw + '?'))
+    if (matchedPath) {
+      result = {
+        ...result,
+        score: Math.min(result.score + 10, 100),
+        reasons: [
+          ...result.reasons,
+          `The URL path '${matchedPath}' combined with other risk signals suggests this could be a credential-harvesting page`,
+        ],
+      }
+    }
+  }
+
   if (policy.customAllowlist.includes(result.domain)) return
 
-  // Admin-managed blocklist forces a block regardless of score
   const forceBlock = policy.customBlocklist.includes(result.domain)
 
   if (!forceBlock && result.score < policy.blockThreshold) return
 
-  // Check if the user already chose to proceed past this domain this session
   const bypassKey = `bypass:${result.domain}`
   const session = await chrome.storage.session.get(bypassKey)
   if (session[bypassKey] && !forceBlock) return
 
   if (policy.reportOnly) {
-    // Log but do not redirect — useful for rollout monitoring
     await logEvent({ domain: result.domain, score: result.score, reasons: result.reasons, action: 'warned' })
     return
   }
@@ -145,6 +230,36 @@ chrome.webNavigation.onBeforeNavigate.addListener(async ({ tabId, url, frameId }
   await chrome.tabs.update(tabId, { url: warningUrl })
 })
 
+// ─── Popup & drive-by tab blocking ────────────────────────────────────────
+chrome.tabs.onCreated.addListener(async (tab) => {
+  if (!tab.openerTabId || !tab.id) return
+
+  const policy = await getPolicy()
+  if (!policy.blockPopups) return
+
+  try {
+    const win = await chrome.windows.get(tab.windowId)
+    if (win.type !== 'popup') return
+
+    const opener = await chrome.tabs.get(tab.openerTabId)
+    if (!opener.url) return
+
+    const hostname = new URL(opener.url).hostname
+    if (!hostname) return
+
+    const result = calculateRiskScoreSync(hostname)
+    if (result.score >= policy.blockThreshold) {
+      await chrome.tabs.remove(tab.id)
+      await logEvent({
+        domain: result.domain,
+        score: result.score,
+        reasons: ['Popup window blocked — opened by a suspicious page'],
+        action: 'popup',
+      })
+    }
+  } catch { /* opener tab or window no longer exists */ }
+})
+
 chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
   if (msg?.type === 'test-domain' && typeof msg.hostname === 'string') {
     calculateRiskScore(msg.hostname).then(respond)
@@ -156,18 +271,37 @@ chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
     return true
   }
 
+  if (msg?.type === 'popup_suppressed') {
+    getPolicy().then(async (policy) => {
+      if (!policy.blockPopups) return
+      const pageUrl = typeof msg.pageUrl === 'string' ? msg.pageUrl : ''
+      let domain = 'unknown'
+      try { domain = new URL(pageUrl).hostname } catch { /* ignore */ }
+      await logEvent({
+        domain,
+        score: 0,
+        reasons: [`Drive-by popup suppressed${msg.url ? `: ${msg.url}` : ''}`],
+        action: 'popup',
+      })
+    })
+    return false
+  }
+
   return false
 })
 
 chrome.webNavigation.onCompleted.addListener(async ({ tabId, url, frameId }) => {
   if (frameId !== 0) return
 
+  // Clear redirect chain tracker for this tab
+  tabRedirects.delete(tabId)
+
   let result: RiskResult
-
+  let hostname: string
   try {
-    const { hostname, protocol } = new URL(url)
-    if (!hostname || !protocol.startsWith('http')) return
-
+    const parsed = new URL(url)
+    if (!parsed.hostname || !parsed.protocol.startsWith('http')) return
+    hostname = parsed.hostname
     result = await calculateRiskScore(hostname)
   } catch {
     return
@@ -181,6 +315,34 @@ chrome.webNavigation.onCompleted.addListener(async ({ tabId, url, frameId }) => 
     return
   }
 
+  // Safe Browsing check (requires API key in options)
+  const sbResult = await checkSafeBrowsing(url)
+  if (sbResult && !sbResult.safe) {
+    result = {
+      ...result,
+      score: Math.min(100, result.score + 60),
+      reasons: [
+        ...result.reasons,
+        `Google Safe Browsing flagged this URL as ${sbResult.threat ?? 'a threat'} — do not proceed`,
+      ],
+    }
+  }
+
+  // Visit history trust: if the user has visited this domain 5+ times in the
+  // last 6 months it's almost certainly a legitimate site they use regularly.
+  if (result.score > 0) {
+    try {
+      const sixMonthsAgo = Date.now() - 180 * 24 * 60 * 60 * 1000
+      const items = await chrome.history.search({ text: result.domain, startTime: sixMonthsAgo, maxResults: 20 })
+      const domainVisits = items.filter(item => {
+        try { return new URL(item.url ?? '').hostname.endsWith(result.domain) } catch { return false }
+      })
+      if (domainVisits.length >= 5) {
+        result = { ...result, score: Math.max(0, result.score - 30) }
+      }
+    } catch { /* history permission unavailable */ }
+  }
+
   await chrome.storage.session.set({ [tabId]: result })
   await updateBadge(tabId, result.score, policy.blockThreshold)
 })
@@ -189,12 +351,21 @@ chrome.tabs.onUpdated.addListener((tabId, change) => {
   if (change.status === 'loading') {
     chrome.storage.session.remove(String(tabId))
     chrome.action.setBadgeText({ text: '', tabId })
+    // Reset redirect counter on new navigation
+    tabRedirects.delete(tabId)
   }
 })
 
 async function updateBadge(tabId: number, score: number, blockThreshold: number): Promise<void> {
   if (score === 0) {
-    await chrome.action.setBadgeText({ text: '', tabId })
+    // Show today's total block count in a dim badge when the page itself is clean
+    const todayCount = await getTodayBlockCount()
+    if (todayCount > 0) {
+      await chrome.action.setBadgeBackgroundColor({ color: '#1e2533', tabId })
+      await chrome.action.setBadgeText({ text: String(todayCount), tabId })
+    } else {
+      await chrome.action.setBadgeText({ text: '', tabId })
+    }
     return
   }
 

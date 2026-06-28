@@ -53,7 +53,48 @@
         <ul id="blocklist-entries"></ul>
       </section>
 
+      <section class="section section-toggles">
+        <h2>Protection</h2>
+        <label class="toggle-row">
+          <div class="toggle-text">
+            <span class="toggle-label">Block drive-by popups</span>
+            <span class="toggle-desc">Suppress <code>window.open()</code> calls not triggered by a direct click — stops ad popup windows before they open.</span>
+          </div>
+          <button type="button" id="popup-toggle" role="switch" aria-checked="true" class="toggle-btn">
+            <span class="toggle-knob"></span>
+          </button>
+        </label>
+      </section>
+
+      <section class="section section-integrations">
+        <h2>Integrations</h2>
+        <div class="integration-row">
+          <div class="integration-text">
+            <span class="toggle-label">Google Safe Browsing API key</span>
+            <span class="toggle-desc">Optional. Adds real-time Google Safe Browsing checks on top of heuristic detection. <a href="https://developers.google.com/safe-browsing/v4/get-started" target="_blank" rel="noopener">Get a free API key ↗</a> (10k lookups/day free tier).</span>
+          </div>
+          <div class="api-key-row">
+            <input type="password" id="sb-api-key" class="api-key-input" placeholder="AIza…" autocomplete="off" spellcheck="false" />
+            <button id="sb-save-btn" class="btn-secondary btn-small">Save</button>
+            <button id="sb-clear-btn" class="btn-secondary btn-small btn-danger-subtle">Clear</button>
+          </div>
+          <p id="sb-status" class="sb-status"></p>
+        </div>
+      </section>
+
+      <section class="section section-data">
+        <h2>Data &amp; sync</h2>
+        <p class="desc">Settings sync automatically across your Chrome devices. Export a backup or reset everything to defaults.</p>
+        <div class="data-row">
+          <button id="export-btn" class="btn-secondary">Export settings</button>
+          <button id="import-btn" class="btn-secondary">Import settings</button>
+          <input type="file" id="import-file" accept=".json" class="hidden" />
+        </div>
+        <button id="reset-btn" class="btn-danger-subtle">Reset all settings to defaults</button>
+      </section>
+
       <div id="save-banner" class="hidden">Settings saved.</div>
+      <div id="import-banner" class="hidden import-banner">Settings imported.</div>
     </main>
   </div>
   <script type="module" src="options.ts"></script>

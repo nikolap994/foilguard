@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "blockThreshold": {
+      "title": "Block threshold (0–100)",
+      "description": "Risk score at or above which navigation is blocked. Default: 65.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "reportOnly": {
+      "title": "Report-only mode",
+      "description": "Log events without blocking. Useful for monitoring before enforcement.",
+      "type": "boolean"
+    },
+    "disableBypass": {
+      "title": "Disable bypass button",
+      "description": "Remove the 'Proceed anyway' option — users cannot bypass warnings.",
+      "type": "boolean"
+    },
+    "blockPopups": {
+      "title": "Block drive-by popups",
+      "description": "Suppress window.open() calls not triggered by a direct user click.",
+      "type": "boolean"
+    },
+    "customAllowlist": {
+      "title": "Allowlist",
+      "description": "Domains that are never flagged regardless of score.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "customBlocklist": {
+      "title": "Blocklist",
+      "description": "Domains that are always blocked regardless of score.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "reportingEndpoint": {
+      "title": "Reporting endpoint",
+      "description": "URL to POST audit events to. Leave empty to disable.",
+      "type": "string"
+    }
+  }
+}
