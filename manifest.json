@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "FoilGuard",
-  "version": "0.1.0",
-  "description": "Detects typosquatting, homoglyph attacks, and newly registered domains. Runs locally — no API key, no data sent to external servers.",
+  "version": "0.2.0",
+  "description": "Blocks typosquatting, homoglyphs, combosquatting, and newly-registered domain attacks before the page loads. Enterprise MDM policy support. No API key.",
   "permissions": ["tabs", "storage", "webNavigation"],
   "storage": {
     "managed_schema": "managed-schema.json"

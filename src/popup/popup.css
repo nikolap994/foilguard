@@ -110,12 +110,93 @@ main {
 
 .hidden { display: none; }
 
+#audit-panel {
+  padding: 8px 16px 10px;
+  border-top: 1px dashed #1e2533;
+}
+
+.audit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 5px 0;
+  border-bottom: 1px solid #12161f;
+  font-size: 11px;
+}
+
+.audit-row:last-of-type { border-bottom: none; }
+
+.audit-action-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  width: 48px;
+}
+
+.audit-blocked  .audit-action-tag { color: #ef4444; }
+.audit-bypassed .audit-action-tag { color: #f59e0b; }
+.audit-warned   .audit-action-tag { color: #94a3b8; }
+
+.audit-domain {
+  flex: 1;
+  color: #cbd5e1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.audit-meta {
+  color: #475569;
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+#audit-empty {
+  font-size: 11px;
+  color: #334155;
+  padding: 6px 0;
+  text-align: center;
+}
+
+.audit-more {
+  font-size: 10px;
+  color: #334155;
+  text-align: center;
+  padding-top: 4px;
+  margin: 0;
+}
+
+#export-btn {
+  margin-top: 8px;
+  width: 100%;
+  background: #12161f;
+  border: 1px solid #1e2533;
+  border-radius: 4px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 5px 8px;
+  text-align: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+#export-btn:hover { color: #94a3b8; border-color: #334155; }
+
 footer {
   padding: 10px 16px;
   border-top: 1px solid #1e2533;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 footer a {
@@ -126,18 +207,23 @@ footer a {
 
 footer a:hover { color: #94a3b8; }
 
-#dev-toggle {
+#dev-toggle,
+#audit-toggle {
   background: none;
   border: none;
   color: #334155;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
   padding: 0;
   line-height: 1;
   transition: color 0.15s;
+  font-family: inherit;
 }
 
-#dev-toggle:hover { color: #64748b; }
+#dev-toggle { font-size: 13px; }
+
+#dev-toggle:hover,
+#audit-toggle:hover { color: #64748b; }
 
 #dev-panel {
   padding: 10px 16px;

@@ -9,6 +9,32 @@ const TIMEOUT_MS = 5_000
 const CACHE_TTL_MS = 60 * 60 * 1_000   // 1 hour
 const CACHE_PREFIX = 'rdap:'
 
+// Simple concurrency limiter — avoids hammering rdap.org when many tabs open at once.
+// State resets on service worker restart, which is fine: cache misses already handle retries.
+const MAX_CONCURRENT = 2
+let activeRequests = 0
+const waitQueue: Array<() => void> = []
+
+function acquireSlot(): Promise<void> {
+  return new Promise(resolve => {
+    if (activeRequests < MAX_CONCURRENT) {
+      activeRequests++
+      resolve()
+    } else {
+      waitQueue.push(() => { activeRequests++; resolve() })
+    }
+  })
+}
+
+function releaseSlot(): void {
+  const next = waitQueue.shift()
+  if (next) {
+    next()
+  } else {
+    activeRequests--
+  }
+}
+
 interface CacheEntry {
   value: number | null
   exp: number
@@ -46,6 +72,7 @@ export async function fetchDomainAge(domain: string): Promise<number | null> {
   const cached = await readCache(registrable)
   if (cached.hit) return cached.value
 
+  await acquireSlot()
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -68,6 +95,8 @@ export async function fetchDomainAge(domain: string): Promise<number | null> {
     // AbortError (timeout), network failure, JSON parse error — fail open.
     await writeCache(registrable, null)
     return null
+  } finally {
+    releaseSlot()
   }
 }
 

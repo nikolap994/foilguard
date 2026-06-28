@@ -38,7 +38,7 @@ function detectCombosquatting(baseName: string): { brand: string; keyword: strin
   const parts = baseName.split('-')
   if (parts.length < 2) return null
 
-  const brand = parts.find(p => TOP_DOMAINS.includes(p))
+  const brand = parts.find(p => TOP_DOMAINS.has(p))
   if (!brand) return null
 
   const keyword = parts.find(p => PHISHING_KEYWORDS.has(p))
@@ -61,7 +61,7 @@ function computeBaseRisk(hostname: string): BaseRisk {
 
   // Fast path: exact match to a known brand is the legitimate domain.
   const originalBase = domain.split('.')[0]
-  if (TOP_DOMAINS.includes(originalBase)) {
+  if (TOP_DOMAINS.has(originalBase)) {
     return { domain, score: 0, reasons: [], minDist: 0 }
   }
 
@@ -85,12 +85,13 @@ function computeBaseRisk(hostname: string): BaseRisk {
   const digitNorm = normalizeDigits(domain)
   if (digitNorm !== domain) {
     const digitBase = digitNorm.split('.')[0]
-    if (TOP_DOMAINS.includes(digitBase)) {
+    if (TOP_DOMAINS.has(digitBase)) {
       score += 70
       reasons.push(`Domain uses digit substitutions to impersonate "${digitBase}" (e.g. 0→o, 1→i)`)
     } else {
       const digitHomoglyphBase = normalizeHomoglyphs(digitNorm).split('.')[0]
-      const distAfterNorm = Math.min(...TOP_DOMAINS.map(b => levenshtein(digitHomoglyphBase, b)))
+      const dLen = digitHomoglyphBase.length
+      const distAfterNorm = Math.min(...[...TOP_DOMAINS].filter(b => Math.abs(b.length - dLen) <= 1).map(b => levenshtein(digitHomoglyphBase, b)))
       if (distAfterNorm <= 1) {
         score += 45
         reasons.push('Domain uses digit substitutions that closely resemble a known brand')
@@ -121,7 +122,7 @@ function computeBaseRisk(hostname: string): BaseRisk {
 
     for (const label of subdomainLabels) {
       const labelParts = label.split('-')
-      const subBrand = labelParts.find(p => TOP_DOMAINS.includes(p))
+      const subBrand = labelParts.find(p => TOP_DOMAINS.has(p))
       const subKeyword = labelParts.find(p => PHISHING_KEYWORDS.has(p))
 
       if (subBrand && subKeyword) {
@@ -129,7 +130,7 @@ function computeBaseRisk(hostname: string): BaseRisk {
         reasons.push(
           `Subdomain "${label}" combines brand "${subBrand}" with deceptive keyword "${subKeyword}"`,
         )
-      } else if (TOP_DOMAINS.includes(label)) {
+      } else if (TOP_DOMAINS.has(label)) {
         score += 35
         reasons.push(`Brand "${label}" used as a subdomain to impersonate it — possible phishing`)
       }
@@ -141,14 +142,17 @@ function computeBaseRisk(hostname: string): BaseRisk {
   const baseName = fullNorm.split('.')[0]
   let minDist = Infinity
   let closestBrand = ''
+  const baseLen = baseName.length
 
   for (const brand of TOP_DOMAINS) {
+    // Levenshtein distance ≥ |length difference|, so skip brands too far in length.
+    if (Math.abs(brand.length - baseLen) > 2) continue
     const dist = levenshtein(baseName, brand)
     if (dist < minDist) {
       minDist = dist
       closestBrand = brand
     }
-    if (dist === 0) break
+    if (minDist <= 1) break
   }
 
   if (minDist === 1) {

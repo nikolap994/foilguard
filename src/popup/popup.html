@@ -35,8 +35,17 @@
       <div id="dev-result" class="hidden"></div>
     </div>
 
+    <div id="audit-panel" class="hidden">
+      <div id="audit-list"></div>
+      <p id="audit-empty" class="hidden">No events recorded yet.</p>
+      <button id="export-btn" type="button">Export log as JSON</button>
+    </div>
+
     <footer>
-      <button id="dev-toggle" type="button" title="Toggle scanner">⚙</button>
+      <div class="footer-left">
+        <button id="dev-toggle" type="button" title="Toggle scanner">⚙</button>
+        <button id="audit-toggle" type="button" title="Toggle audit log">log</button>
+      </div>
       <a href="https://github.com/nikolap994/foillab" target="_blank" rel="noopener">
         FoilLab CTF →
       </a>

@@ -1,6 +1,6 @@
 import topDomainsData from '../../data/top-domains.json'
 
-export const TOP_DOMAINS: readonly string[] = topDomainsData
+export const TOP_DOMAINS: ReadonlySet<string> = new Set(topDomainsData)
 
 export const SUSPICIOUS_TLDS = new Set([
   '.tk', '.ml', '.ga', '.cf', '.gq',
