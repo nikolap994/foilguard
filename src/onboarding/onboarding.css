@@ -185,3 +185,39 @@ code {
   .features { grid-template-columns: 1fr; }
   h1 { font-size: 26px; }
 }
+
+/* ── How it works ── */
+.section-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 40px 0 32px; }
+.section-title { font-size: 18px; font-weight: 700; margin: 0 0 20px; color: #f1f5f9; letter-spacing: -0.01em; }
+.how-it-works { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+.step { display: flex; gap: 16px; align-items: flex-start; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%; background: rgba(65,208,127,0.12);
+  border: 1px solid rgba(65,208,127,0.25); color: #41d07f; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+}
+.step strong { display: block; font-size: 14px; color: #f1f5f9; margin-bottom: 4px; }
+.step p { font-size: 13px; color: #64748b; line-height: 1.55; margin: 0; }
+.tip {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #64748b; line-height: 1.55;
+  margin-bottom: 0;
+}
+.tip strong { color: #94a3b8; }
+.tip em { color: #94a3b8; font-style: normal; }
+
+/* ── FoilLab CTA ── */
+.foillab-cta {
+  display: flex; align-items: center; gap: 20px; justify-content: space-between;
+  background: linear-gradient(135deg, rgba(77,159,255,0.08), rgba(77,159,255,0.03));
+  border: 1px solid rgba(77,159,255,0.2); border-radius: 10px; padding: 20px 24px;
+  margin: 32px 0 0;
+}
+.foillab-cta-text strong { display: block; font-size: 15px; color: #f1f5f9; margin-bottom: 6px; }
+.foillab-cta-text p { font-size: 13px; color: #64748b; line-height: 1.55; margin: 0; max-width: 400px; }
+.btn-foillab {
+  flex-shrink: 0; background: #4d9fff; color: #030d1a; font-weight: 700; font-size: 13px;
+  padding: 10px 18px; border-radius: 7px; text-decoration: none; white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-foillab:hover { background: #6ab0ff; }

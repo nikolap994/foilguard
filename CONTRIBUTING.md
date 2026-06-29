@@ -16,13 +16,16 @@ Thank you for your interest. FoilGuard is a focused security tool — contributi
 git clone https://github.com/nikolap994/foilguard
 cd foilguard
 npm install
-npm run dev       # Watch mode — rebuilds on save
-npm test          # Run detection tests (no browser required)
+npm run dev           # Watch mode — Chrome build, rebuilds on save
+npm run build:firefox # Firefox build → dist-firefox/
+npm test              # Run detection tests (no browser required)
 npm run type-check
 npm run lint
 ```
 
 Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked → select `dist/`.
+
+Load in Firefox: `about:debugging` → This Firefox → Load Temporary Add-on → select any file inside `dist-firefox/`. The Firefox build uses `manifest.firefox.json` which drops the `sidePanel` permission — all other features work identically.
 
 ## Contribution areas
 

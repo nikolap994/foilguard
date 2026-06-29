@@ -161,3 +161,48 @@ footer {
 .footer-link { font-size: 11px; color: #475569; text-decoration: none; }
 .footer-link:hover { color: #94a3b8; }
 .footer-btn { font-size: 11px; }
+
+/* ── Light theme ─────────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  body { background: #f8fafc; color: #0f172a; }
+  .logo { color: #0f172a; }
+  header { border-bottom-color: #e2e8f0; }
+  .icon-btn { color: #94a3b8; }
+  .icon-btn:hover { color: #64748b; background: #f1f5f9; border-color: #e2e8f0; }
+  .icon-btn[aria-pressed="true"] { color: #41d07f; background: rgba(65,208,127,0.1); border-color: rgba(65,208,127,0.3); }
+  #domain-text { color: #94a3b8; }
+  #reasons li { background: #fee2e2; color: #1e293b; border-left-color: #ef4444; }
+  #safe-msg { color: #16a34a; }
+  .trust-btn { border-color: #e2e8f0; color: #94a3b8; }
+  .trust-btn:hover { color: #41d07f; border-color: rgba(65,208,127,0.4); }
+  .rescan-btn { border-color: #e2e8f0; color: #94a3b8; }
+  .rescan-btn:hover { color: #64748b; border-color: #cbd5e1; }
+  .dash-stats { background: #f1f5f9; border-bottom-color: #e2e8f0; }
+  .stat-label { color: #94a3b8; }
+  .stat-divider { background: #e2e8f0; }
+  .quick-scan { border-bottom-color: #e2e8f0; }
+  .qs-label { color: #94a3b8; }
+  .qs-input { background: #fff; border-color: #e2e8f0; color: #0f172a; }
+  .qs-input:focus { border-color: #cbd5e1; }
+  .qs-btn { background: #e2e8f0; border-color: #cbd5e1; color: #64748b; }
+  .qs-btn:hover { background: #cbd5e1; color: #1e293b; }
+  .qs-domain { color: #1e293b; }
+  .qs-reasons li { background: #fee2e2; color: #1e293b; }
+  .recent-label { color: #94a3b8; }
+  .recent-row { border-bottom-color: #f1f5f9; }
+  .recent-domain { color: #1e293b; }
+  .recent-score { color: #94a3b8; }
+  .recent-time { color: #cbd5e1; }
+  .recent-empty { color: #94a3b8; }
+  #audit-panel { border-top-color: #e2e8f0; }
+  .audit-title { color: #94a3b8; }
+  .audit-export-btn { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+  .audit-export-btn:hover { color: #475569; border-color: #cbd5e1; }
+  .audit-row { border-bottom-color: #f1f5f9; }
+  .audit-domain { color: #1e293b; }
+  .audit-meta { color: #94a3b8; }
+  #audit-empty { color: #94a3b8; }
+  footer { border-top-color: #e2e8f0; }
+  .footer-link { color: #94a3b8; }
+  .footer-link:hover { color: #64748b; }
+}

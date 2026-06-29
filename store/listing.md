@@ -1,94 +1,76 @@
-# Chrome Web Store — Listing Copy
-
----
+# FoilGuard — Chrome Web Store Listing
 
 ## Name
-
 FoilGuard
 
 ## Short description (132 chars max)
-
-Blocks phishing before you reach it — typosquatting, homoglyphs, combosquatting. Runs locally. No account. No API key.
-
-_(116 chars)_
+Blocks typosquatting, homoglyph, and combosquatting attacks before the page loads. No account. No API key. Fully local.
 
 ## Category
-
-Security
+Productivity → Security
 
 ## Language
-
-English (United States)
-
----
-
-## Long description
-
-FoilGuard blocks phishing and domain impersonation attacks before the page loads — with no account, no API key, and no browsing data sent to any server.
-
-**What it stops**
-
-• Typosquatting — domains 1–2 characters off a known brand (gogle.com, rnicrosoft.com)
-• Digit substitution — leet-speak impersonation (g00gle.com, paypa1.com, amaz0n.com)
-• Homoglyph attacks — Cyrillic, Greek, and fullwidth characters that look like Latin letters
-• Combosquatting — brand names paired with deceptive keywords (paypal-login.com, amazon-security.com)
-• Subdomain abuse — brands used as subdomain labels to impersonate legitimate sites
-• Newly registered domains — brand-like names registered in the last 30 days
-
-**How it works**
-
-Every navigation is scored against a risk model in under 1 millisecond — pure local JavaScript, no cloud calls. If the score reaches the threshold, you see a clear warning page before anything loads. You decide: go back safely, or proceed knowing the risk.
-
-Legitimate sites (mail.google.com, accounts.paypal.com, login.microsoft.com) always score 0. Subdomains of known brands are correctly identified and never blocked.
-
-**Privacy first**
-
-The only outbound request is a rate-limited RDAP lookup to rdap.org for newly registered domain checks — your registered domain name only, never the full URL, never the path, never query strings. Results are cached locally for 1 hour. No analytics. No telemetry. No tracking of any kind.
-
-**Enterprise ready**
-
-IT admins can push policy via MDM, Intune, or Group Policy:
-• Set a custom block threshold
-• Add an internal allowlist or domain blocklist
-• Disable the "Proceed anyway" bypass option entirely
-• Stream audit events (blocked / bypassed) to a SIEM endpoint
-
-An audit log of all blocked and bypassed navigations is stored locally and exportable as JSON directly from the popup.
-
-**Open source**
-
-FoilGuard is MIT licensed. The full source is on GitHub. No obfuscation, no tracking scripts, no hidden network calls.
+English
 
 ---
 
-## Screenshots needed (1280×800 or 640×400)
+## Full description
 
-1. **Popup — safe site** — show the green score circle with "No threats detected." on google.com
-2. **Popup — warning** — show yellow/red score with reasons listed (use gogle.com in dev panel)
-3. **Warning interstitial** — the full block page for paypal-login.com with score 70 and reason
-4. **Popup — audit log** — show the "log" panel open with a few blocked entries
-5. **Dev panel** — show scanning rnicrosoft.com and getting [BLOCK] score 65
+FoilGuard protects you from domain impersonation attacks — the technique behind the majority of phishing campaigns. Before a page loads, FoilGuard scores the domain and blocks it if it looks like it's impersonating a real brand.
+
+**What it detects:**
+• Typosquatting — domains one or two characters off from real brands (gogle.com, rnicrosoft.com)
+• Digit substitution — leet-speak replacements (paypa1.com, g00gle.com)
+• Look-alike characters — Cyrillic, Greek, and other scripts visually identical to Latin letters
+• Combosquatting — real brand name combined with deceptive words (paypal-login.com, amazon-security.com)
+• Newly registered domains — brand-like domains registered in the last 30 days
+• Subdomain abuse — suspicious use of subdomains to mimic real sites
+• Redirect chain attacks — pages reached through 3+ rapid automatic redirects
+• Plain-HTTP brand impersonation — known brands served over unencrypted HTTP
+
+**What it does not do:**
+• Does not send your browsing history anywhere
+• Does not require an account or API key
+• Does not use third-party analytics or telemetry
+• Legitimate sites are never blocked — mail.google.com, accounts.paypal.com score 0
+
+**Features:**
+• Risk score 0–100 shown in the popup for any site you visit
+• Quick scan — check any domain before clicking (right-click menu or popup search bar)
+• Audit log — every blocked domain logged with timestamp and reason, export as JSON or CSV
+• Allowlist / blocklist — fine-grained per-domain control
+• Drive-by popup blocker — suppresses window.open() abuse from suspicious pages
+• Google Safe Browsing integration — optional, bring your own API key (10k lookups/day free)
+• Enterprise MDM policy support — deploy and lock settings via Google Admin
+• Side panel — scan links without leaving the current page (Chrome 114+)
+• Weekly digest notification — summary of threats blocked over the past 7 days
+• Firefox compatible — install the Firefox build from the GitHub releases page
+
+**Privacy:**
+All detection runs locally in your browser. The only network request FoilGuard makes is a once-daily fetch of an updated domain list from its public GitHub repository — no personal data included. Google Safe Browsing is opt-in with your own key. Full privacy policy: foilsuite.netlify.app/privacy
+
+**Open source:**
+Full source code at github.com/nikolap994/foilguard — MIT licensed.
+
+---
+
+## Screenshots needed
+
+1. **Popup — safe site:** Score circle shows 0 with a green ring. Dashboard with today's block count.
+2. **Popup — blocked domain:** Score circle shows 85 in red. Reason list explaining the signals.
+3. **Warning page:** Full interception page with domain, risk score, reason list, Go back / Proceed buttons.
+4. **Options page:** Block threshold slider, allowlist/blocklist editors, Safe Browsing API field, export.
+5. **Audit log:** List of blocked domains with action type, timestamp, JSON/CSV export buttons.
 
 ## Promotional tile (440×280)
-
-Text: "FoilGuard — Block phishing before it loads"
-Subtext: "Typosquatting · Homoglyphs · Combosquatting"
-Style: dark background (#0a0d14), green accent (#41d07f), monospace font
+Background: #08090d
+FoilGuard logo centered
+Tagline: "Block domain impersonation — before the page loads"
 
 ---
 
-## Privacy practices (required fields in the Store dashboard)
+## URLs
 
-**Does it collect user data?** No
-
-**Single purpose description:**
-Detects and blocks domain impersonation attacks (typosquatting, homoglyphs, combosquatting) by scoring the domain of each navigation locally before the page loads.
-
-**Permissions justification:**
-
-| Permission | Reason |
-|---|---|
-| `tabs` | Read the current tab's URL to score the domain and update the popup |
-| `storage` | Cache RDAP results (session), store audit log (local), read admin policy (managed) |
-| `webNavigation` | Intercept navigation before pages load to score and optionally block |
-| `host_permissions: <all_urls>` | Required to intercept navigation on any domain |
+- **Privacy policy:** https://foilsuite.netlify.app/privacy
+- **Homepage:** https://foilsuite.netlify.app
+- **Support:** https://github.com/nikolap994/foilguard/issues

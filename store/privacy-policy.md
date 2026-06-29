@@ -76,4 +76,8 @@ If this policy changes materially, the extension version will be incremented and
 
 ## Contact
 
-For questions about privacy: open an issue at https://github.com/nikolap994/foilguard
+For questions about privacy: open an issue at https://github.com/nikolap994/foilguard or email nikolap994@gmail.com
+
+---
+
+_This document is the authoritative privacy policy for Chrome Web Store submission. The human-readable version is also available at **https://foilsuite.netlify.app/privacy**._

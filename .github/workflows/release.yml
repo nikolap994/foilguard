@@ -20,15 +20,23 @@ jobs:
 
       - run: npm ci
       - run: npm run type-check
-      - run: npm run build
 
-      - name: Zip extension
-        run: |
-          cd dist
-          zip -r ../foilguard-${{ github.ref_name }}.zip .
+      - name: Build Chrome
+        run: npm run build
+
+      - name: Build Firefox
+        run: npm run build:firefox
+
+      - name: Zip Chrome extension
+        run: cd dist && zip -r ../foilguard-${{ github.ref_name }}.zip .
+
+      - name: Zip Firefox extension
+        run: cd dist-firefox && zip -r ../foilguard-firefox-${{ github.ref_name }}.zip .
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: foilguard-${{ github.ref_name }}.zip
+          files: |
+            foilguard-${{ github.ref_name }}.zip
+            foilguard-firefox-${{ github.ref_name }}.zip
           generate_release_notes: true

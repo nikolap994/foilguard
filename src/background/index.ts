@@ -29,6 +29,7 @@ const REMOTE_DOMAINS_URL =
 const REMOTE_KEY = 'foilguard_remote_domains'
 const REMOTE_TS_KEY = 'foilguard_remote_domains_ts'
 const UPDATE_ALARM = 'foilguard-domains-refresh'
+const DIGEST_ALARM = 'foilguard-weekly-digest'
 const STALE_MS = 24 * 60 * 60 * 1000
 
 let remoteMerged = false
@@ -69,7 +70,29 @@ getPolicyFast()
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === UPDATE_ALARM) fetchRemoteDomains()
+  if (alarm.name === DIGEST_ALARM) sendWeeklyDigest()
 })
+
+async function sendWeeklyDigest(): Promise<void> {
+  try {
+    const log = await getAuditLog()
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const weekEvents = log.filter(e => e.ts >= weekAgo)
+    const blocked = weekEvents.filter(e => e.action === 'blocked' || e.action === 'popup').length
+    if (blocked === 0) return
+    const topDomains = [...new Set(
+      weekEvents.filter(e => e.action === 'blocked').map(e => e.domain)
+    )].slice(0, 3)
+    chrome.notifications.create(DIGEST_ALARM, {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('icons/foilguard-48.png'),
+      title: `FoilGuard blocked ${blocked} threat${blocked === 1 ? '' : 's'} this week`,
+      message: topDomains.length > 0
+        ? `Top threats: ${topDomains.join(', ')}`
+        : 'Open the popup to review your security log.',
+    })
+  } catch { /* audit log unavailable */ }
+}
 // ──────────────────────────────────────────────────────────────────────────
 
 // ─── Redirect chain tracking ───────────────────────────────────────────────
@@ -108,6 +131,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   })
 
   chrome.alarms.create(UPDATE_ALARM, { periodInMinutes: 60 * 24 })
+  chrome.alarms.create(DIGEST_ALARM, { periodInMinutes: 60 * 24 * 7 })
   await syncDomainsIfStale()
 
   if (details.reason === 'install') {

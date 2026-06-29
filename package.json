@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build",
+    "build:firefox": "vite build --config vite.config.firefox.ts",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "tsx scripts/test-detection.mjs",
+    "benchmark": "tsx scripts/benchmark.mjs",
     "update-domains": "node scripts/update-domains.mjs"
   },
   "devDependencies": {
