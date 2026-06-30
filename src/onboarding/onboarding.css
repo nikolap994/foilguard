@@ -155,6 +155,8 @@ code {
   display: flex;
   gap: 12px;
   align-items: center;
+  margin-top: 24px;
+  padding-bottom: 8px;
 }
 
 .btn-primary {
