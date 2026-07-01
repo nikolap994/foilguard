@@ -4,6 +4,20 @@ All notable changes to FoilGuard are documented here.
 
 ---
 
+## [0.4.0] — 2026-06-30
+
+### Added
+- **Benchmark script** (`scripts/benchmark.mjs`) — 66 labeled domains (33 phishing + 33 legitimate); reports precision, recall, F1, FPR, and confusion matrix; run with `npm run benchmark` or `--verbose`
+- **Detection architecture blog post** — published to FoilSuite site; covers 6-signal scoring, weight rationale, and benchmark results (97% precision, 90.9% recall, 93.8% F1, 3% FPR)
+- **Firefox CI job** — second GitHub Actions job builds the Firefox artifact (`npm run build:firefox`) on every push
+- **Test step in CI** — Chrome build job now runs `npm test` (51 detection tests) before completing
+
+### Changed
+- CI `node-version`: 20 → 22 (Astro and modern tooling require ≥22.12.0)
+- CONTRIBUTING.md: added Firefox build and load instructions (`about:debugging → Load Temporary Add-on`)
+
+---
+
 ## [0.3.0] — 2026-06-28
 
 ### Added

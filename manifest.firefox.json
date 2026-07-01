@@ -47,7 +47,7 @@
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "src/background/index.ts",
+    "scripts": ["src/background/index.ts"],
     "type": "module"
   },
   "action": {
