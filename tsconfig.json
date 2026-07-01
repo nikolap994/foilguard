@@ -9,6 +9,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "resolveJsonModule": true,
+    "types": ["chrome", "node"],
     "skipLibCheck": true
   },
   "include": ["src", "vite.config.ts"]
