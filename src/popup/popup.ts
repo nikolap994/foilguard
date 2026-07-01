@@ -127,7 +127,7 @@ function setupQuickScan(): void {
   const reasonsList = document.getElementById('qs-reasons')!
 
   async function doScan(): Promise<void> {
-    let raw = input.value.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
+    const raw = input.value.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
     if (!raw) return
     btn.textContent = '…'
     btn.disabled = true

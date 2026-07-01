@@ -2,7 +2,7 @@
 // Blocks drive-by popups: window.open() calls that happen without
 // a genuine user click within the last 800ms.
 
-;(function () {
+(function () {
   let enabled = true
 
   // Fetch the current policy setting once on inject.
